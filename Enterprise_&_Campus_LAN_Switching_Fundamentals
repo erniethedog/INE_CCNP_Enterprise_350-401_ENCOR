@@ -17,9 +17,39 @@ MAC Address Learning Process
 - When host send its FIRST Ethernet frame, the switch will build an entry in the table for that address.
 - SOURCE MAC, SWITCH PORT where it learned MAC, VLAN
 
-COMMAND: show mac address-table
+//CMD: show mac address-table
+
+Types of Entries
+- Static
+- Dynamic
+
+- Inactivity Timer / MAC Aging Timer. Default value = 300s (5 mins)
+- When host sends a frame, Inactivity Timer resets
+- When no frames are received on switch after the timer, switch drops the MAC entry
+- When interface goes down, MAC entry is deleted on table
+
+2 Types of Static Entries
+- MAC Addresses loaded by switch upon bootup. You can see a CPU tag on those on the show command
+- MAC statically/manually input by switch admin/user
+
+//CMD: show mac address-table <dynamic> <address|value>
+//CMD: show mac address-table count
+//CMD: switch(config)#mac address-table aging time <secs>
+Generally, do not change aging timer
+
+//CMD: switch(config)#mac address-table static <MAC> vlan <id> interface <type/number>
+Statically configure a MAC
+This is usually the the very bottom the config (show run)
 
 
+How to Determine Where to Send Frames (or DISCARD)
+- Switch compares MAC address to ALL entries on its mac table
+- For MAC with 2 entries, switch sends frame to port on static entry (like prioritization on static routes)
+- If frame is not learned, switch will flood it to all ports on same vlan, except on the port where the frame was received
+- Switch may also discard frame [//CMD: switch(config)#mac address-table static <MAC> vlan <id> drop]
+- Switch will discard frame when destination port is also where the switch learned the mac address
+- Discard frame when frames are runts or giants or with FCS error
+- Discard based on access list or any security reasons decided by switch
 
 ============================================================================
 
