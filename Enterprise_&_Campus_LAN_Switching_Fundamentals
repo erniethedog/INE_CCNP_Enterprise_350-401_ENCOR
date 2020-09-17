@@ -1,0 +1,29 @@
+https://my.ine.com/course/enterprise-campus-lan-switching-fundamentals/915025ba-2733-4e15-88d9-2794f7b67924
+Enterprise & Campus LAN Switching Fundamentals
+
+============================================================================
+1. MAC Address-Table & Switching Basics
+
+- Every switch has a MAC Address table
+- Beginning of Frame is Preamble 7 bytes
+- 1 byte SOF
+- 6 bytes Destination MAC Address; 6 bytes Source MAC Address
+- 2 bytes Length Identification
+- Data/payload 46 to 1500 bytes
+- 4 bytes FCS
+
+MAC Address Learning Process
+- MAC Address Table is a piece/chunk in memory
+- When host send its FIRST Ethernet frame, the switch will build an entry in the table for that address.
+- SOURCE MAC, SWITCH PORT where it learned MAC, VLAN
+
+COMMAND: show mac address-table
+
+
+
+============================================================================
+
+
+
+
+============================================================================
