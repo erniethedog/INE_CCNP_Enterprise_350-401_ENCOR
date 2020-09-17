@@ -53,7 +53,107 @@ How to Determine Where to Send Frames (or DISCARD)
 
 ============================================================================
 
+2. TCAM & SDM Concepts
+
+TERNARY CONTENT ADDRESSABLE MEMORY
+
+- TCAMS are volatile
+- TCAM can store three values unline regular RAM
+  0 = True
+  1 = Fales
+  X = other voltage level = Don't Care
+- Good for matching partial patterns
+  Routes
+  ACL Entries
+  anything that would associated subnet or wildcard mask
+- many switches use TCAMs for MAC Address-Table
+
+
+TCAM Structure
+- Value
+- Mask
+- Results
+
+Example: Layer 3 TCAM Entry
+3.1.1.0 / 24
+
+TCAM Entry: first 24 bits are 0. last 7 bits are X
+00000000 00000000 00000000 XXXXXXXX
+
+Results: Pointer to Adjacency/Rewrite Info
+
+
+Example: Layer 2 TCAM Entry
+48 bit MAC. Mask of 48 bits with 0 value
+
+Results: Egress Interface
+
+
+TCAM Implementation
+---------------------------------------------
+Lower-End Switches
+
+One chunk is holding TCAM Memory
+TCAM is divided into L2 Entries, L3 Entries, QoS Policies, Security Policies
+
+When frame comes in, Forwarding Engine (FE) extracts data from frame and looks up on the TCAM
+TCAM responds back with the look ups
+FE decides after receiving the results from TCAM
+
+
+Higher-End Switches
+
+A DIMM/SIMM is per TCAM function. One for L2, one for L3, one for QoS, one for Security
+Dedicated memory for dedicated TCAM
+
+same lookups by FE and responses by TCAM
+---------------------------------------------
+
+
+Switching Database Manager (SDM)
+- Mechanism that determines TCAM usage for lower end switches
+- utilize pre-formatted SDM templates
+- Templates cannot be modified
+- One can switch to a different template
+- Different template only activated after a reload
+
+
+SDM IOS Commands
+show current template
+//CMD: show sdm prefer ?
+
+show available templates
+//CMD: show sdm prefer
+
+Change sdm preference
+//CMD: switch(config)#sdm prefer <template-name>
+//CMD: switch(config)#reload
+
+
+
+
+
 
 
 
 ============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
