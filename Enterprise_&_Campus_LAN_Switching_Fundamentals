@@ -130,21 +130,177 @@ Change sdm preference
 //CMD: switch(config)#reload
 
 
+============================================================================
+
+3. VLANs & TRUNKS
+
+Purpose of VLANS
+- logical method of grouping Layer 2 switchport on a local switch into different broadcast domains
+
+VLANS Facts and Configuration
+- Range of 1 - 4095
+0 : Reserved for 802.1p
+example: frames sent from PC to switch (switch port of vlan45) has no vlan tags
+         applying QoS from laptop (from the registry editor)
+          Priority Code Point field (0-7 value; higher is prioritized) for QoS
+          Need to put something in VLAN tag. VLAN tag is 0 just you can get access to the PCP filed
+
+1 - 1001 : Normal Range VLANs
+1002 - 1005 : Reserved VLANs - Token Ring; FDDI - TECHNOLOGY is not used anymore
+1006 - 4094 : Extended Range 
+4095 : Reserved - Depending on Operating System
+
+How to Config
+- Create VLAN globally (can be skipped when using Cisco when you directly go to next step)
+//CMD: switch(config)#vlan <vlan-number>
+//CMD: switch(config-vlan)#name <descriptive name>  !!vlan is not created unless you leave config-vlan mode
+
+//CMD: switch(config)#vlan <vlan-range>             !!vlan 2-8 OR vlan 11,14,17,19-30
+//CMD: switch(config)#no vlan 2-4094                !!will not delete reserved VLANs. will delete previously created vlans
+
+- Apply VLAN to switchport
+//CMD: switch(config)#interface <type/value>
+//CMD: switch(config)#switchport access vlan <vlan-number>
+
+- VLAN Verification
+//CMD: switch#show vlan
+!! Note that there are specialized types of vlans like RSPAN and Private VLANs
+
+//CMD: switch#show vlan brief
+//CMD: switch#show vlan summary
+//CMD: switch#show vlan id <vlan-value>   !!check single vlan
+
+Notes:
+Each VLAN is a broadcast domain. As such, VLANs should be on different subnets
+Extended range vlans
+  - Needs VTP version 3
+  - or Turn off VTP
+Reserved VLANs cannot be used
+Ports placed within unconfigured VLANs may become "inactive"
+Beware of maximun STP instances when configuring large quantities of VLANs. On Cisco, each VLAN has its own instance of STP (PVSTP)
 
 
+
+EXTENDING VLANS with VLAN TRUNKS
+
+VLAN Trunk Functionality
+- used to extend multiple broadcast domains between two switches utilizing a single physical link
+- Frames must be embedded with some kind of VLAN identifier when travelling across a VLAN trunk. VLAN tag does not exist on access ports
+
+Two Methods to Encapsulates
+- Encapsulation via Cisco ISL
+- Vlan Tag by 802.1q
+
+Cisco ISL Trunks
+- Inter Switch Link
+- Depracated on MOST Cisco switches
+- Encapsulate each Ethernet frame with additional ISL Header (26 bytes)
+- In the header, there is a 15 bit field for VLAN ID
+
+802.1q Trunks
+- IEEE Standard
+- Inserts a TAG into an Ethernet Header to denote VLAN ID
+- Supports a Native VLAN which does not include a tag
+- 802.1q tag is 32 bits long
+  Frame Stucture: DA,SA, 802.1q_TAG, Type/Len, Data, FCS
+
+802.1q TAG: TPID (16 bits), PCP (3 bits), DEI (1 bits), VID (12 bits)
+TPID: 0x8100
+PCP: Priority Code Point for QoS
+DEI: Discard Eligibility Indicator --> 1 - Eligible to be discarded in times of Congestion; 0 - Dont drop frame
+     Previously Canonical Field Identifier: 0 - Ethernet; 1 - Token Ring
+VID: VLAN ID
+     By default, native VLAN is VLAN 1. No tags on native VLAN 
+     Native VLAN can be changed. Recommend to change native VLAN for security
+     Native VLAN should be common on trunks or NATIVE VLAN MISMATCH will occur
+     CDP will pick up NATIVE VLAN MISMATCH errors
+     
+VLAN TRUNK CONFIG
+- static/manual trunking
+- dynamic negotiation of trunking with peer switch
+
+//CMD: switch(config-if)#switchport trunk encapsulation (isl|dot1q)     !!dot1q is used by almost everyone
+
+force interface into trunking
+//CMD: switch(config-if)#switchport mode trunk
+
+
+Optional VLAN Trunking Commands
+Changing Native VLAN
+//CMD: switch(config-if)#switchport trunk native vlan <vlan-id>     !!should be a vlan PREVIOUSLY CREATED
+
+Restricting VLANs in trunk
+//CMD: switch(config-if)#switchport trunk allowed vlan <add|add|except|none|remove> <vlan-list>
+
+To Tag Native VLAN
+//CMD: switch(config)#vlan dot1q tag native
+
+Monitoring VLAN Trunks
+//CMD: switch#show interfaces trunk
+//CMD: switch#show interfaces  <type/value> switchport
+//CMD: switch#show interfaces status
+
+
+Troubleshooting STATIC VLAN Trunks
+- Confirm that neither side of trunk is Admin Down
+- If one (or both) sides is Up/Down or Down/Down
+  > Speed and Duplex
+  > Physical layer
+- Same encapsulation on both sides
+- Native VLAN matches on both sides. This does not make the trunk go down
+- Confirm that both sides of the trunk are allowing the same set of VLANs
+- Confirm matching VTP Domain Name
+  > Dynamic Trunking Proticol carries VTP Domain Name
+
+
+DYNAMIC VLAN TRUNKING WITH DTP
+
+Dynamic Trunking Protocol
+- Cisco Proprietary Protocol
+- Dynamically negotiate VLAN trunk encapsulation type and status
+- Also serves as trunking keepalive mechanism (every 30 seconds)
+
+!! BFD can actually see trunk problems
+
+DTP Modes
+- ON: Trunk is statically created but still transmits DTP
+- Desirable: Port remains in Access Mode while initiating DTP requests for trunking
+- Auto: Port remains in Access Mode while passively listening for DTP. Default
+
+  Mode        Trunk (ON)  Desirable    Auto
+  Trunk(ON)       Y           Y         Y
+  Desirable       Y           Y         Y
+  Auto            Y           Y         N
+  
+- DTP uses 802.3 Frame Type
+
+Configuration
+Encapsulation
+//CMD: switch(config-if)#switchport trunk encapsulation (isl|dot1q)     !!DTP prefers ISL. need to config dot1q
+
+DTP Trunking Mode
+//CMD: switch(config-if)#switchport mode <trunk|auto|desirable>
+
+Static VLAN; Disable DTP
+//CMD: switch(config-if)#switchport nonegotiate
+
+Troubleshooting DYNAMIC VLAN Trunks
+- Same with Static steps
+- check both side are suitable for trunking
+- Remember that DTP is Cisco Proprietary
+- DTP carries VTP domain name so ensure domain name matches on both side
+
+
+============================================================================
+
+4. VLAN TRUNKING PROTOCOL
 
 
 
 
 ============================================================================
-
-
-
-
-
-
-
-
+============================================================================
+============================================================================
 
 
 
