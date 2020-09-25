@@ -295,8 +295,51 @@ Troubleshooting DYNAMIC VLAN Trunks
 
 4. VLAN TRUNKING PROTOCOL
 
+- Cisco Proprietary
+- Originally designed to ensure consistency of VLANs between switches
+- VTP messages carried between switches on VLAN trunks
 
 
+VTP Version 1
+VTP Version 2
+  - Support for Token Rings
+  - Added VTP consistency checks
+VTP Version 3
+  - Enchaned authentication options
+  - Support for extended range VLANs
+  - Can propagate non-vlan information (ie. Multiple STP/MSTP, Private VLANs)
+
+
+MODES
+VTP ver 1 and 2
+  - VTP Server Mode (default)
+    > Create VLANs (populated to all switches)
+    > Delete VLANs (populated to all switches)
+  - VTP Client Mode
+  - VTP Transparent Mode
+    > Create/Delete VLANs which is only LOCAL to that switch
+  - VTP Off
+  
+VTP ver 3
+ - VTP Server Mode (default)
+    > Wont let create/delete VLANs
+ - VTP Primary Server
+    > Net Admin chooses a switch to be the primary (manual; no dynamic)
+ - VTP Client Mode
+    > Cannot be a primary server
+ - VTP Transparent Mode
+ - VTP Off
+ 
+ 
+OPERATION
+Important VTP Parameters
+ - VTP Domain Name (Case-sensitive)
+ - VTP Authentication
+ - VTP Configuration Revision - increment by 1 whenever changes occur
+ 
+//CMD: switch#show vtp status
+//CMD: switch#
+17:44
 
 ============================================================================
 ============================================================================
