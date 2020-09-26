@@ -338,8 +338,53 @@ Important VTP Parameters
  - VTP Configuration Revision - increment by 1 whenever changes occur
  
 //CMD: switch#show vtp status
-//CMD: switch#
-17:44
+
+
+VTP CONFIGURATION
+
+VTP 1 and 2
+- same domain name
+//CMD: switch(config)#vtp domain [name]
+
+- configure version
+//CMD: switch(config)#vtp version 2
+
+- configure mode
+//CMD: switch(config)#vtp mode [client|mode|transparent]
+
+- configure password (optional)
+//CMD: switch(config)#vtp password [password]
+
+!! Revision number follows the number of commands/changes made on the VLAN database
+!! 1 command = increment of 1 in revision number
+!! MD5 hash/digest will change when you enter a password. That's how another switch will know that a password was added
+
+
+VTP Version 3
+- same with VTP 1 and 2 config
+- Note that vtp version 3 defaults a switch to a VTP Secondary server
+
+- Configure VTP Primary Server
+//CMD: switch#vtp primary [force|mst|vlan]
+
+- Plaintext auth password
+//CMD: switch(config)#vtp password [password] !!cisco is used as an example
+//CMD: switch(config)#end
+//CMD: switch#show vtp password
+VTP Password: cisco !!cisco is the password
+
+- Plaintext entry but stored as hashed digest
+//CMD: switch(config)#vtp password [password] hidden
+//CMD: switch(config)#end
+//CMD: switch#show vtp password
+VTP Password: 74654654sdfsd8fsd4sfs4fsdf7f87sfqfsvx !!encrypted
+
+
+!! On VTP Version 3, you can send the hashed password and enter it on the config
+//CMD: switch(config)#vtp password <hashed-digest> secret
+//CMD: switch(config)#vtp password 74654654sdfsd8fsd4sfs4fsdf7f87sfqfsvx secret  !!example
+
+04:17 out of 09:30
 
 ============================================================================
 ============================================================================
