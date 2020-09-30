@@ -384,10 +384,44 @@ VTP Password: 74654654sdfsd8fsd4sfs4fsdf7f87sfqfsvx !!encrypted
 //CMD: switch(config)#vtp password <hashed-digest> secret
 //CMD: switch(config)#vtp password 74654654sdfsd8fsd4sfs4fsdf7f87sfqfsvx secret  !!example
 
-04:17 out of 09:30
+!! VTP Version 3 will have entry for Primary ID (MAC) and Primary Description for Primary Server
+!! Need to config a switch to a primary server
+
+//CMD: switch(config)#vtp primary
+!! If there was another primary, the newly configured switch (to be a primary) will be the primary server
+!! On some cases, when you config a switch to be primary, you will be prompted with a password
+
+- See what interfaces are enabled for VTP
+//CMD: switch#show vtp password
+//CMD: switch#show vtp counters
+//CMD: switch#show vtp interface    !!does not mean that the interfaces are up. Enabled VTP status means that VTP will flow once interface goes up
+
 
 ============================================================================
+
+5. ETHERCHANNELS
+
+Port Aggregation With Etherchannels
+
+Why Etherchannels
+
+
+Etherchannels and STP Interaction
+
+
+Load-Balancing
+
+
+Dynamic Etherchannels
+
+
+Layer-3 Etherchannels
+
 ============================================================================
+
+6. SUMMARY
+
+
 ============================================================================
 
 
