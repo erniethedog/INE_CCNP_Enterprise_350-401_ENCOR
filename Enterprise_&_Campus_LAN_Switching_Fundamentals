@@ -404,34 +404,96 @@ VTP Password: 74654654sdfsd8fsd4sfs4fsdf7f87sfqfsvx !!encrypted
 Port Aggregation With Etherchannels
 
 Why Etherchannels
-
+- Need for sufficient bandwidth
+- STP will block redundant ports/path
 
 Etherchannels and STP Interaction
+- STP treats one bundle/port channel as one link
 
-
+Overview
+- link aggregation method
+- 802.3ad standard
+- up to 8 active links in a channel
+- Can be used to bundle
+  > L2 Access ports
+  > L2 VLAN trunks
+  > L3 Routed Ports (utilizing single subnet)
+- Treated as a single link  
+  
 Load-Balancing
+- When switch receives a frame, MAC address is learned on the port channel interface
+- Etherchannel doesnt fragment L2 frames. For a switch to send a frame to the port channel, it will pick a phy link on the bundle
+- Load-balancing accomplished per-flow of traffic
+- Frames belonging to the same flow always traverse the same physical link
+- Multiple methods of defining a flow:
+  > By default, flow = source MAC Address
+  //CMD: switch(config)#port-channel load-balance <OPTION>
+  > Other options: dst-ip, dst-mac, src-dst-ip, src-dst-mac, src-ip, src-mac
+  > Command takes effect asap. No reboot required on device
+  
+Dynamic Etherchannels with PAgP
+- PAgP = Port Aggregation Protocol (Cisco Proprietary)
+- Only works on Cisco Switches. Doesnt work on Cisco Routers or servers
+- Supports up to 8 active links in a channel
+- Modes
+  > Auto - waiting for other side to initiate
+  > Desirable - initiate PAgP frams
 
-
-Dynamic Etherchannels
-
+Dynamic Etherchannels with LACP (Industry Standard)
+- Link Aggregation Control Protocol
+- IEEE Standard 802.3ad
+- Supports up to 8 active links in a channel
+- Support hot-standby links. IE. You can configure 10 links but only 8 will work at any instant
+- Modes:
+  > Passive = Auto in PAgP
+  > Active = Desirable in PAgP
+- LACP Priority and ID. Like in STP, lower is preferred. 
+  > Switch with lower system priority will choose its ports for the bundle (in case there are more than 8 configured)
+  > Lower port priority will go through the bundle
 
 Layer-3 Etherchannels
+//CMD: switch(config)#interface port-channel 1
+//CMD: switch(port-channel)#no switchport
+//CMD: switch(port-channel)#ip address 4.4.4.1/30
+
 
 ============================================================================
 
 6. SUMMARY
 
+Etherchannel Configuration Guidelines
+- All links in an etherchannel must terminate between the same two switches
+- All links characteristics must be the same
+  > Speed and Duplex Settings
+  > Configuration Settings
+- Logical Port-Channel Interfaces
+  > Dynamically Created
+  > Subsequent configuration changes should be done here
 
+Configuration Steps
+- Ensure consistency between all potential linsk
+- Select unused number for port-channel interface
+- Bundle links into your Etherchannel
+//CMD: switch(config)#interface fast 0/10-12 
+//CMD: switch(config-if-range)#channel-group <CH GROUP NUM 0 to 48>
+//CMD: switch(config-if-range)#channel-group 1 mode <active|auto|desirable|on|passive>
+!!mode on = not sending anything. needs ON on the other side
+
+Optional Etherchannel Configurations
+- Designate a minimum number of links for the channel to be active
+//CMD: switch(config)#interface port-channel <id>
+//CMD: switch(config-if)#port-channel min-links <value>
+
+- Designation maximum number of LACP links allowed in a bundle. Remaining link will be on hot-standby state
+//CMD: switch(config)#interface port-channel <id>
+//CMD: switch(config-if)#lacp max-bundle <1-8>
+
+
+Monitoring Etherchannels
+//CMD: switch#show etherchannel summary
+//CMD: switch#show interface port-channel <value>
+//CMD: switch#show lacp neighbor details
+//CMD: switch#show lacp internal
+
+!! LACP keepalives are sent about every 30 seconds
 ============================================================================
-
-
-
-
-
-
-
-
-
-
-
-
