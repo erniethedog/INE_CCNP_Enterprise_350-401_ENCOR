@@ -2,6 +2,10 @@
 
 LAN Switching Introduction
 
+Class is using:
+Cisco uses IOL/IOu (Virtual switches)
+3560X IOS15.0SE physical switch
+
 
 ==============================================================
 VLANs & Trunking
