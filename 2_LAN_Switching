@@ -10,6 +10,98 @@ Cisco uses IOL/IOu (Virtual switches)
 ==============================================================
 VLANs & Trunking
 
+//CMD: Switch
+
+VLANS
+- Standard VLAN (1-1005)
+  > vlan 1: Default ethernet access vlan. default native vlan
+          : Cannot be deleted but can be manually pruned from trunks
+          : cannot be pruned by VTP
+          : should be used for actual port assignment
+  > vlan 1002 to 1005
+          : default legacy token ring / FDDI vlans
+          : cannot be deleted but can be manually pruned from trunks
+          : cannot be pruned by VTP
+          : should not be used for actual port assignments
+          
+- Extended VLAN (1006 - 4094)
+  > can normally only used in one of 2 cases
+    : VTP is configured in transparent mode
+    : vtp version 3
+  > not all extended VLANs can be used. some are reserved for internal use
+    : native layer 3 switchport. switch uses a vlan on the svi on the backend. basically an access port with an IP address
+    //CMD: switch#show vlan internal usage
+  > not all platforms agree on the internal range
+    : for real deployments, check the internal allocations
+    : some allocate ascending, some descending
+    : look for something like "vlan internal allocation policy ascending" in the show run
+    
+Creating VLANs
+- Globally
+- VLAN database
+  //CMD: switch(config)#vlan database
+- at the time of assignment
+
+Creating a VLAN automatically creates
+- spanning-tree instance
+- MAC address table
+
+Verified by
+- //CMD: switch#show vlan brief
+- //CMD: switch#show spanning-tree vlan <vlan number>
+- //CMD: switch#show interface trunk
+
+
+Ethernet Port Types
+Layer 2 Switchports
+- Access: 1 vlan only
+- Trunk: multiple vlans
+- Tunnel switchports: layer 2 vpn (802.1q tunnel)
+- Dynamic switchpors: DTP negotiation
+
+Layer 2 Trunking
+- 802.1q
+  > open standard
+  > Native VLAN set untagged
+//CMD: switch#show interface trunk
+//CMD: switch#show inteface switchport
+//CMD: switch#show spanning-tree [vlan|interface]
+
+
+DTP Negotiation
+- enabled by default
+- DTP desirable mode
+  > initiates trunking nego
+  > switchport mode dynamic desirable
+  > switchport mode trunk
+- DTP Auto mode
+  > passively listed for trunking nego
+  > switchport mode dynamic auto
+- turn off
+  > switchport nonegotiate (needs to statically assign encapsulation and trunk mode first)
+  > switchport mode access
+  > switchport mode dot1q-tunnel
+- Verify
+  > show interface trunk
+  > show interface <int_name> switchport
+  > show interface switchport
+  
+Manual Trunk Pruning
+- Trunks allowed list controls what vlans will forward over the link
+  > all vlans (1-4094)
+- allowed list can be edited for manual pruning
+
+> switchport trunk allowed vlan [WORD | add | all | except | none remove ]
+
+> show vlan brief
+> show interface status 
+  : check status of connected, not connected of errdis)
+  : check trunking, routed ports
+> show interface switchport
+> show interface trunk
+> show spanning-tree [vlan|interface]
+
+50:00
 
 
 ==============================================================
