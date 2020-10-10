@@ -101,20 +101,112 @@ Manual Trunk Pruning
 > show interface trunk
 > show spanning-tree [vlan|interface]
 
-50:00
-
-
 ==============================================================
 
 VLAN Trunking Protocol (VTP)
 
+VTP v1/2 - Modes, Authentication, Pruning
 
+VTP
+- sync VLAN creation data between switches
+- not a requirement of Ethernet networks
+- does not define the broadcast domain
+
+VTP Modes
+- Server
+  > Creates VLANS
+  > Advertised VLAN
+  > Install VLANS from other advertisements
+  
+- Client
+  > UNABLE to Create VLANS
+  > Advertised VLAN
+  > Install VLANS from other advertisements
+
+- Transparent
+  > similar to VTP OFF
+  > Creates locally significant VLANS
+  > Does not install VLANs from other advertisements
+  > will forward other advertisements
+
+VTP Configuration Revision
+- Revision Number = Sequence number for the database; highest number winds; domian is sync when revision number matches everywhere
+- Potential Problem
+  > Wrong database with high config revision number can overwrite database
+  > true for both VTP servers and clients
+  > reason that VTP v1/2 is rarely used in production
+
+Configs:
+! VTP runs only on trunks
+! By default, domain name is <NULL>. Changing domain from NULL to a certain name DOES NOT increment Rev Num
+! Updating configured VLANs increments REV NUM
+! Deleting VLANs does not update the "switchport mode access" or any switchport interface levels commands
+! Default is VTP version 1
+! From MODE Server to Transparent, switch does not delete the vlan database. It creates a vlan config on the global config since vlans are now locally significant
+! VTP Domain names MATTER even if a switch is in TRANSPARENT MODE. Should be same domain to forward VTP advertisements
+! To turn off VTP, Switch should support VTP ver3
+! When you create a VLAN, you create a STP instance and update the MAC-Address Table
+
+Switch(config)#vtp domaine <DOMAIN NAME>
+
+VTP Pruning
+- Reducent unnecessary replication of
+  > Broadcasts
+  > unknown unicasts
+  > unknown multicast
+- Only works in SERVER and CLIENT mode. DO NOT RUN TRANSPARENT MODE ON ANY SWITCH ON THE NETWORK
+- Config:
+  > vtp pruning
+  > show interface trunk
+  > show interface pruning
+- VLANS 2-1001 are 'prune eligible' (STANDARD VLANS)
+- VLANS not in the prune eligible list cannot be pruned (traffic will always be sent/received for them)
+- To edit prune eligible list
+  > switchport trunk pruning vlan
+- To verify
+  > show interface trunk
+  > show interface pruning
+  > show interface switchport
+! showing vlans neighbor switch asked for. prune others not asked
+  
+VTP Pruning Problems
+- What is all devices don't support pruning
+  > VTP is not open standard. Cisco Proprietary
+  > When no response is received for VTP pruning message, switch tells all other switches to stop pruning
+    > All VLANs are now allowed
+- What if devices don't agree on VTP rev num
+- What if there are VTP Transparent switches
+
+VTP Authentication
+- used for validation of VTP updates
+- Configuring/Verifying
+  > vtp password
+  > show vtp password
+  > show vtp status
+  > compare MD5 hashes
 
 ==============================================================
 
 VTP Version 3
 
+Enchancements
+Security: Fixes configuration revision overwrite problem
+> Primary Server - can make vlan changes 
+> Secondary Server - unable to make changes. only listens
+> Best practice: promote one switch to primary, then make changes, then demote it back to secondary
 
+> Password can be hidden
+
+New Advertisements
+- Extended VLANs
+- Private VLANs
+- MST configuration (Multiple Spanning Tree)
+
+VTP can now be disabled
+- Globally
+- Per Link
+
+05:00
 
 ==============================================================
 
