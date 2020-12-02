@@ -206,7 +206,77 @@ VTP can now be disabled
 - Globally
 - Per Link
 
-05:00
+
+Feature VLAN, MST: You can be client, server, transparent on these modes (independent of each other)
+Commands to set switch to client or server on vlan and mst (global config)
+> vtp mode client vlan
+> vtp mode clien mst
+> vtp mode server vlan ---> makes you secondary server
+> vtp mode server mst ---> makes you secondary server
+
+> show vtp status
+- Check for Primary ID ---> This is the Primary Server MAC
+
+exec mode
+> vtp mode primary [mst|vlan]---> to make this primary server
+- there can only be one primary at any instant for a certain feature (1 for vlan, 1 for mst)
+
+
+For Private VLANs
+Example commands:
+conf t
+vlan 4000
+private-vlan primary
+end
+vlan 4001
+private-vlan community
+end
+vlan 4002
+private-vlan isolated
+end
+vlan 4000
+private-vlan association add 4001
+private-vlan association add 4002
+end
+show vlan private-vlan
+- This will show that 4000 is primary and 4001 and 4002 is secondary with the specified types (community, isolated)
+- Configure this on the primary server and this will be advertised to other switches, along with the associations
+
+For MST
+example config
+conf t
+spanning-tree mst configuration
+revision 1
+name MST_A
+instance 1 vlan 10-20
+instance 2 vlan 21-30
+end
+show spanning-tree mst configuration
+- will show if switch is running in mst mode or pvstp
+- will show instance and vlans mapped per instance
+- of course, if you're running VTP, you can only configure MST on the MST switch primary server
+
+
+global config
+> vtp mode off
+
+OR in link level
+int fa0/1
+no vtp
+
+to exit primary server 
+exec mode
+> vtp mode client
+> vtp mode server
+
+
+RSPAN vlans
+conf t
+vlan 2222
+remote-span
+end
+show vlan remote span
+- RSPAN is advertised on VTP
 
 ==============================================================
 
