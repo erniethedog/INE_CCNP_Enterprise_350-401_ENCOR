@@ -282,6 +282,136 @@ show vlan remote span
 
 EtherChannel
 
+- Technique for aggregating the bandwidth of physical links together
+- aka: port channels, channeling, Link Aggregation (LAG), NIC Teaming
+
+2 Parts
+- Port Channel Interface
+- Actual Member Interfaces
+
+Goal: hide the member interfaces from the upper layer protocols
+- eg. STP sees one 2Gbps link, not 2 x 1Gbps
+- Results is active/active forwarding instead of active/standby with STP
+
+Advantages
+- Cheap incremental upgrade solution
+- Adds link layer redundancy
+
+Disadvantages
+- flows cannot exceed the bandwidth of an individual link (frames cannot be split)
+     eg. 2 Gbps LAG is NOT a 2Gbps pipe but a 2 x 1Gbps pipe
+     eg. LAG adds lanes to highway but doesnt increase the speed limit
+- load distribution: flows can get polarized to one member of the LAG
+     eg. 1x40GigE gives better throughput than 4x10GigE
+     - check load balancing (dst-mac, src-mac, etc)
+- LAG doesnt make the best decision on load distribution
+
+
+SINGLE VS MULTICHASSIS ETHERCHANNEL
+- EtherChannels cause fate sharing at the access layer
+  eg. what happens when an access switch goes down (even with redundact power, redundant NICs)
+- One solution - use two access layer switches
+  > problem is that NICs usually only support active/standby outside LAG
+  > only 50% of BW is lost unless application supports load distribution at upper layers
+- Better solution - trick the servicer into running LAG
+  > Form a logical chassis between two physical switches
+  > Results is that server thinks it has two connections to same switch
+  > 100% BW can be used and more resiliency is added
+- Goal is to turn physical triangle into a logical P2P link
+
+
+How MultiChassis EtherChannel (MCEC) Works
+- MCEC/MLAG relies on sync control plane between switches
+  > forward the data plane out member ports of both chassis
+  > sync the control plane on the backend transparently
+  > sync is proprietary and not inter-operable
+  
+  
+CISCO's MCEC IMPLMENTATIONS
+
+Stackwise Cross-Stack EtherChannel
+- Access platforms eg Catalyst 3750/3850
+- control plane synnc over dedicated stacking cables
+- stack cable creates a bidirectional closed-loop
+- one control plane is shared among stack members
+- one management plane is shared among stack members
+
+Virtual Switching Systems (VSS)
+- Aggregation platforms (catalyst 4500/6500/6800)
+- control plane sync over Virtual Switch Link (VSL)
+  > Typically 2x10GigE LAG
+- one control plane shared among VSS
+- one management plane shared among VSS
+- usually 1 active supervisor and 3 standby supervisors
+
+Virtual Port Channel (vPC)
+- data platforms (nexus 5000/7000/9000)
+- control plane sync over a vPC peer link
+  > typically 2x 10GigE LAG
+- 2 independent control planes in the vPC
+- 2 independent management planes in the vPC
+- usually 2 active supervisors and 2 standby supervisors
+
+StackWise vs VSS vs vPC
+- Stackwise can have more than 2 members up to the stack limit
+- VSS and vPC are always a pair of switches
+- logical results of all is the same
+
+
+EtherChannel Negotiation Protocols
+- LAG goal is to trick STP into forwarding active/active
+  > risk is infinite loop
+  > negotiation protocols help mitigate risk
+- LAG negotiation comes in 2 forms
+  > Port Aggregation Protocol (PAgP)
+  > Link Aggregation Control Protocol (LACP)
+- Static LAG is supported but not recommended
+  > failure to LAG can cause STP loop
+  > EtherChannel Guard can help mitigate this
+  
+PAgP
+- cisco proprietary
+- esentially pre-standard LACP
+
+LACP
+- standard per IEEE 802.3ad Link Aggregation (LAG)
+
+Function is the same (thinks ISL vs dot1q)
+
+LAG is configured as
+- channel-group [number] mode [mode]
+
+MODES
+On - No negotiation
+Desirable and Auto - initiate and listen for PAgP
+Active and Passive - Initiate and liste for LACP
+
+
+LOAD BALANCING
+- LAG driver is responsible for load distribution amongst members
+  > ie STP and CAM table see LAG as outgoing interface, not members
+  > best way to chec/verify network
+- Available load balancing methos are per-platform
+  > source and dest mac
+  > src and dest IP address
+  > src and dest Layer 4
+- balancing is locally significant and outbound
+  > mismatching on either end is ok
+  > adjustments should be made based on traffic patterns to prevent traffic polarization
+
+BEST PRACTICE
+- get statictics and do manual change of load distribution
+- probably need SNMP for data
+
+
+Layer 2 vs Layer 3 EtherChannel
+- LAG is independent or port mode
+  > eg LAG can be access, trunk, tunnel, layer 3, etc
+- LAG commonly suffers from order of operations issues
+  > members and LAG interface must agree on parameters
+  > eg both members and LAG are layer 2 or layer 3, but no mix
+
+41:00
 
 
 ==============================================================
