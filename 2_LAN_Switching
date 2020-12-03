@@ -411,24 +411,166 @@ Layer 2 vs Layer 3 EtherChannel
   > members and LAG interface must agree on parameters
   > eg both members and LAG are layer 2 or layer 3, but no mix
 
-41:00
-
-
 ==============================================================
 
 Layer 2 EtherChannel Configuration
 
 
+conf t
+int range fa0/23-24
+channel-group 1 mode [active|passive|auto|desirable|on]       !locally significant number
+end
+show int fa0/23 status
+show int fa0/24 status
+show etherchannel summary   !!verification. Protocol field indicates the protocol used (Null for mode ON)
+show spanning-tree
+
+- There will be a spanning tree loop if the other side is not configured/misconfigured LAG
+
+BEST PRACTICE
+create LAG
+member has blank config
+put the member into the LAG
+make changes on the LAG interface. it will automatically be inherited on the member ports
+
+conf t
+int range fa0/21 -22
+shutdown        <------------!!! if you dont shut ports down, when you config the encap on po3, SW will config the encap on the individual members, one by one
+!!!!!!!!!!!!!! SW will detect incompatability and will suspend the other member with diff config
+!!!!!!!!!!!!!! Ports will be Independent (show etherchannel summary) 
+channel-group 3 mode desirable
+end
+int po3
+switchport trunk encap dot1q
+switchport mode trunk
+end
+int range fa0/21 - 22
+no shut
+
+
+- LACP and PAgP will check neighboring switch priority and Device ID to check if ports are connected to same neighbor switch
+- Device with lower device priority will do the negotiation
+- on VSS and vPC, protocol spoofs the Device ID to be the same (so other end will think it is the same chassis)
+
+
+show mac address-table dynamic {MAC ADDRESS}
+- it will show that MAC is learned on the port channel interface
 
 ==============================================================
 
 Layer 3 EtherChannel Configuration
 
+!! Best to configure on blank interface config
+!! port channel should be same layer with phy interface. ie L2 port channel for l2 phy ports. l3 port channel, l3 phy ports
 
+conf t
+default int range fa0/23 - 24
+int range fa0/23 - 24
+shutdown
+no switchport   !!Switchport is disabled. port is on L3 port. if this is done under the port channel, it will not be inherited on the members
+channel-group 1 mode [active|passive|auto|desirable|on]     !!!!port channel will inherit the no switchport command. port channel is now at L3
+end
+int po1
+ip address 12.0.0.1 255.255.255.0
+end
+int range fa0/23 -24
+no shut
+
+show vlan internal usage      !!!!internal vlan will be associated on the port channel. NOT on the phy port
+
+conf t 
+int range fa021-24
+channel-protocol pagp     !!!!!!!!!!!!!!!!!!!!! only pagp can run on the  interface. safety net to set negotiation to pagp.
+!!!!!!!!!!!!of course, there is also channel-protocol lacp
 
 ==============================================================
 
-Spanning-Tree Protocol
+Spanning-Tree Protocol (Legacy and Per VLAN STP)
+
+ROOT BRIDGE ELECTION
+ROOT PORT ELECTION
+MODIFYING STP PATH SELECTION
+UNDERSTANDING STP TIMERS
+
+How STP Works
+- Elect one Root Bridge
+- Elect one Root Port per Bridge
+- Elect Designated Ports
+* Other ports are in blocking state afterwards
+
+ROOT BRIDGE ELECTION
+- Switch with lowest bridge ID in the network becomes root bridge
+- Bridge ID contains (BID + SYS ID EXT : MAC )
+  > Bridge Priority
+    - 0 - 61440 in increments of 4096
+    - default of 32768
+  > System ID Extension
+    - 0-4095 (basically vlans)
+  > MAC Address of switch
+
+Changing Root Bridge Election
+- Manually change BID Priority
+  > spanning-tree vlan [VLAN] priority
+  > lower is better
+- User root bridge macro
+  > spanning-tree vlan [VLAN] root [primary|secondary]
+  > sets local priority based on current root bridge
+- Verification
+  > show spanning-tree vlan [VLAN]
+  > show spanning-tree root
+
+Port Roles
+Root ----> Forwarding Upstream
+Designated ----> Forwarding downstream
+Blocked ----> cannot associate MAC address; cannot do MAC learning; thus cannot reply on this link; still receiving traffic
+
+
+ROOT PORT ELECTION
+- Root Port is upstream facing towards Root Bridge
+- Elected based on lowest Root Path Cose
+  > cumulative cost of all links to get to the root
+- Cost based on inverse BW
+  > ie. higher bandwidth = lower cost
+  > not linear
+  > RSTP has improvement on cost values
+- If tie in cost
+  > choose lowest upstream BID (show spanning-tree detail: Designated Bridge has priority ______, address ________)
+  > choose lowest upstream Port ID (Designated Port ID / Port Identifer of local switch)
+  
+Data rate     STP cost      RSTP cost
+4 Mbit/s        250       	5,000,000
+10 Mbit/s       100       	2,000,000
+16 Mbit/s       62        	1,250,000
+100 Mbit/s	    19    	    200,000
+1 Gbit/s	      4         	20,000
+2 Gbit/s	      3         	10,000
+10 Gbit/s	      2         	2,000
+100 Gbit/s	    N/A        	200
+1 Tbit/s	      N/A       	20
+  
+show spanning-tree   !!!!!!!! Verify
+show spanning-tree detail
+  > look for BID
+  > hello time, max age, forward delay  -------- configured by root. can only be changed on the root bridge
+  > root priority and MAC
+  > Root Port and cost to Root Bridge
+    - Check local cost of link
+    - Check upstream neighbor cost (designated path cost)
+    - If designated path cost = 0, port is directly connected to root bridge. Root brigde is advertising cost of 0
+
+
+DESIGNATED PORT ELECTION
+- DPs are downstream facing away from Root Bridge
+- Like Root Port, elected based on
+  > Lowest Root Path Cose
+  > Lowest BID
+  > Lowest Port ID
+- All other ports go into blocking mode
+  > Receive BPDUs
+  > Discard all other traffic
+  > cannot send traffic
+  
+24:42
 
 
 
