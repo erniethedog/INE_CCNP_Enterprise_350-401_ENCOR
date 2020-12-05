@@ -524,6 +524,12 @@ Root ----> Forwarding Upstream
 Designated ----> Forwarding downstream
 Blocked ----> cannot associate MAC address; cannot do MAC learning; thus cannot reply on this link; still receiving traffic
 
+Port States
+Disabled
+Blocking
+Listening
+Learning
+Forwarding
 
 ROOT PORT ELECTION
 - Root Port is upstream facing towards Root Bridge
@@ -570,19 +576,223 @@ DESIGNATED PORT ELECTION
   > Discard all other traffic
   > cannot send traffic
   
-24:42
+Changing Port's Role
+- Modify port's cost
+  > spanning-tree [vlan] cost
+  > bandwidth [bps]
+- Modify Bridge ID
+  > spanning-tree vlan [vlan] priority
+- Modify Port ID
+  > spanning-tree vlan [vlan] port-priority
+- Verification
+  > show spanning-tree interface [int] detail
+  > show spanning-tree vlan [vlan] detail
 
+STP Timers
+- Timers affect the transition between port states
+  > Set only on root bridge. Root bridges is the only one that sends the timers to other switches
+  > if you set this on a non-root bridge, config will push through but timers wont be sent out to other switches
+- Hello
+  > how often configuration BPDUs are sent
+  > Defaults to 2 seconds
+- MaxAge
+  > How long to wait in blocking state without hearing a BPDU
+  > defaults to 20 seconds
+- Forward Delay
+  > how long to wait in each listening and learning phases
+  > defaults to 15 seconds
 
+Changing STP Timers
+- Configuration
+  > spanning-tree vlan [vlan] hello-time
+  > spanning-tree vlan [vlan] forward-time
+  > spanning-tree vlan [vlan] max-age
+- Verification
+  > show spanning-tree vlan [vlan]
 
 ==============================================================
 
-Optional Spanning-Tree Features
+Optional Spanning-Tree Features (LEGACY STP)
+
+STP Convergence Optimizations
+- Port Fast
+  > Edge ports shouldnt be subject to Forwarding Delay. Skip Listening and Learning Phase. Jump from BLK to Forwarding
+  > also affects TCN (Topology Change Notification).
+  > When a link flaps on the switch (even edge ports), a TCN is sent out by a switch to the Root Bridge
+  > The root bridge sends a TCN to all other switches. Other switches changes the CAM Table MaxAge Timer (300s default) to the STP MaxAge Timer (default 20)
+  > Any of the MAC address that get refrshed will stay on the CAM table. MAC address that dont get refreshed gets deleted
+  > On RSTP, when a TCN is received, SW will just delete the CAM table
+  
+  > Edge port can be a trunk or access port. only means that interface is not running STP. Not part of the calculation of the tree
+  > spanning-tree portfast [trunk|<cr>]     !!!configured on interface
+  > spanning-tree portfast default          !!!enabled on global. SW will enable portfast of ports not receiving BPDUs
+  > show spanning-tree int detail
+  > show spanning-tree int [INT] portfast
+  
+- UplinkFast
+  > Direct Root Port failure should reconverge immediately if Alternate Port available
+  > Since Switch has already determined the Alt Path, alt port will go up if the Root Port goes down
+  > spanning-tree uplinkfast    !!!!global config 
+  
+- Backbone Fast
+  > Indirect failures should start recalculating immediately
+  > does not wait for the STP MaxAge Timer (default 20s) to expire before recalculating the tree
+  > spanning-tree backbonefast      !!!global config
 
 
+
+STP Filters
+- BPDU Filter
+  > filter BPDUs in and out
+  > drops BPDUs that goes out and comes in the interface
+  > typically on access switches ports going to end host
+  
+  > spanning-tree portfast [bpdufilter|bpduguard] default  
+  
+- BPDU Guard
+  > if BPDU is received, port is error disabled (errdisable)
+  
+  ! To restore error disabled interface, manually shut/unshut interface. OR enabled "errdisable recovery interval <timer value>"
+  
+- Root Guard
+  > if a superior BPDU is received, port is error disabled
+  > designated ports is prevented to be root ports
+  > normally on Core and Distribution switches facing downstream (on designated ports)
+  > because Superior BPDUs are advertised downstream. Switches are not expecting superior BPDUs upstream
+  > spanning-tree guard root    !!!configured on interface
+  
+STP Loop Prevention
+- Loop Guard
+  > prevents unidirectional links by using BPDU keepalives
+  > protect against STP failures due to software bugs (designated switch does not send BPDUs)
+- UDLD
+  > prevent unidirectional links by using UDLD keepalives
+  > protection against miswiring (ie transmit is cut but receive is ok, or vice versa)
+  > normally used when L1 is fiber
+- these 2 are normally used together  
 
 ==============================================================
 
-Rapid Spanning-Tree Protocol
+Rapid Spanning-Tree Protocol (RSTP)
+
+- new standard. IEEE 802.1w
+- now icorporated as IEEE 802.1D-2004
+
+Changed VS legacy STP
+- simplified port states 
+- additional port roles
+- rapid convergence based on sync process
+- path calculation remains the same
+
+RSTP PORT STATES
+- Discarding
+  > dropping frames
+  > link is down or blocked
+- Learning
+  > building the CAM
+  > still dropping frames
+- Forwarding
+  > normal forwarding
+
+RSTP PORT ROLES
+- Port Roles are decoupled from port states
+- Root Port and Designated Port
+  > same as before
+- New Roles
+  > Alternate
+  > backup
+  > edge
+
+Alternate Port
+- alternate but less desirable path to root
+- allows the equivalent of UplinkFast
+  > fast root recovery
+  > automatic, does not require uplinkfast command
+- basically, upstream facing interface in discarding state
+- Root port is upstream facing interface in fwd state
+
+Backup Ports
+- Backup Designated Ports
+- Activates if primary designated port fails
+- operating in discarding state
+
+Edge Port
+- immediate transitions to forwarding
+- still using "spanning-tree portfast" for backwards compatability with legacy STP
+- do not generate TCN for state change
+- equivalent of PVST+Portfast enabled ports
+- On RSTP, when TCN is received, switches flushes the CAM table entries for the associated VLAN and spanning tree instance
+- maintains edge status as long as no BPDUs are received
+  > if BPDU is received, remove edge status and generate TCN
+
+NON-EDGE ports fall into two types
+  > Point to point
+   - Full duplex ports
+  > Shared
+   - half duplex ports (like hubs)
+- only p2p designated ports that are non-edge use the sync process for rapid convergence
+
+
+RSTP Sync Process
+- goal is for a bridge to sync its root port with the rest of the topology. ie. build a tree
+- when a bridge elects a root port, it assumes all non-edge ports to be designated
+  > all non-edge ports are discading at this moment
+- SW send a proposal out to all designated ports
+  > proposal has port role set to be designated
+  > proposal contains root bridge info (priority, cost, etc)
+- Downstream SW review the proposal
+  > if they dont have better path to root, they agree and send the proposal downstream
+  > if they dont agree, they announce their information
+- When designated port receives agreement, port goes into forwarding
+- If downstream bridge sends better root information, local bridge changes root port
+  > elects a local root port
+  > blocks all non-edge designated ports
+  > starts sync process on all designated ports
+- Port blocking is essential in preventing transient loops
+- Sync process ensures all bridges agree on the same root bridge
+
+- Unlike legacy STP, sync process is like a negotiation. legacy stp relies on timers to send BPDUs and hopes everyone is synced after 30 seconds
+- If properly designed, RSTP will converge on a subsecond time
+
+
+RSTP FAULT DETECTION
+- In legacy, BPDUs are only generated by root bridge
+- on RSTP, each bridge generates BPDU every hello interval (default 2 seconds)
+- if 3 hellos are missed from a neighbor, reconvergence begins
+  > 6 seconds vs 20 seconds MaxAge
+- MaxAge is used as a hop count
+  > every bridge sends BPDUs on its own
+  > age incremented by every bridge as BPDUs go downstream 
+  > MaxAge also used on shared port for legacy STP backwards compatability
+- Fault can be detected faster by means of physical layer signaling
+
+
+RSTP Convergence
+- RSTP needs to reconverge when root port is lost
+- if there is an alternate port, it is selected in place of the old root port
+  > new root is then syncronized with downstream bridges. ie. sync process is run
+- if no alternate port, and no better info
+  > declare self as root
+  > run sync process
+  > possibly adapt to better information
+ 
+Cons of RSTP
+- non-deterministic, depends on topology
+  > meshy and large topologies converge slow
+- Root bridge failures may cause slow convergence
+  > subject to "Count to Infinity" effect on networks
+  > may take a 1 minute to converge instead of 1 or 2 seconds 
+- To ensure fast convergence
+  > keep topology small and avoid excessive redundancy
+  > rely on physical layer failure detection not the hello BPDUs
+
+24:25
+RSTP TOPOLOGY CHANGE
+
+
+
+
+
 
 
 
