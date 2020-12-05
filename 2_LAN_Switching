@@ -786,8 +786,34 @@ Cons of RSTP
   > keep topology small and avoid excessive redundancy
   > rely on physical layer failure detection not the hello BPDUs
 
-24:25
+
 RSTP TOPOLOGY CHANGE
+- generated when link becoms forwarding state
+  > orginated by the switch that detected the event
+  > uses special BPDU bit to signal topology change
+  > Flooded by all switches using reverse path forwarding
+- Flushes MAC Address tables
+  > causes temporary excessive unicast traffic flooding
+  > use edge ports as much as possible to reduce TCN 
+
+RSTP Configuration
+26:02
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
