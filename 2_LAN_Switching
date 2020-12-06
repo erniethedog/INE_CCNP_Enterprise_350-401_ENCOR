@@ -724,6 +724,7 @@ Edge Port
 - On RSTP, when TCN is received, switches flushes the CAM table entries for the associated VLAN and spanning tree instance
 - maintains edge status as long as no BPDUs are received
   > if BPDU is received, remove edge status and generate TCN
+  > spanning-tree portfast default    ! makes all ports edge. if bpdu is received, it will be non-edge
 
 NON-EDGE ports fall into two types
   > Point to point
@@ -797,35 +798,133 @@ RSTP TOPOLOGY CHANGE
   > use edge ports as much as possible to reduce TCN 
 
 RSTP Configuration
-26:02
+- Enable RSTP
+  > spanning-tree mode rapid-pvst
+  > automatically backwards compatible with legacy STP
+    - SW sends a proposal. If no reply is received, it operates under legacy STP
+- Sync only occurs on P2P non-edge ports
+  > implies link-type must be accurate
+  > spanning-tree link-type [point-to-point|shared]
+  > spanning-tree portfast [trunk]
+- Path selection remains unchanged
+  > root bridge electrion
+  > root port adn designation port elections
+  > only change is how to we calculate whether link is blocking or discarding, or forwarding (root and designate) direction
 
+interface range fa0/19-24
+switchport encapsulation dot1q
+switchport mode trunk
+! to trunk all vlans
 
+show spanning-tree
+show spanning-tree | include protocol   !ieee = legacy version; rstp = rapid spanning tree
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+!global config
+spanning-tree mode [rapid-pvst|mst|pvst]
+show spanning-tree    !!under Type, if "Peer (STP)" is seen, peer is running legacy
 
 ==============================================================
 
 Multiple Spanning-Tree Protocol
 
+- Multiple Spanning-Tree
+  > started as Cisco MISTP (Mult Instance STP)
+  > originally defined in IEEE 802.1s
+  > now standard per IEEE 802.1Q-2005
+- Works by decoupling VLAN and STP instance
+  > STP instance to VLAN mapping is user defined
+  > topology calculation by RSTP
+- Result is higher scalability
+  > Rapid PVST+ uses one instance per VLAN
+  > As VLANs scale, control plane dies 
+  > PVST is inefficient because there are typically only 3 possible trees anyways. (Normally, networks are designed as a triangle)
 
+MST Regions
+- MST defines a region as bridged that agree upon
+  > Instance name
+  > Revision number
+  > VLAN to STP instance mappings
+
+Intra vs Inter Region
+- Intra Region
+  > Details of the region are known within the region
+  > VLAN to STPIs are manually configured
+  > Undefined VLANs fall into CIST (MST 0) - Common Internal Spanning Tree
+- Inter Region
+  > Details between regions are not known
+  > Different regions see each other as virtual bridges
+    - eg. 1 region = 1 VIRTUAL SWITCH. the whole region is like a cloud
+    - there will be a region root port and designated port
+  > result is simplified inter-region calculation
+  > Intra-region MSTIs are collapsed into CIST
+
+MST Interoperability
+- MST is backwards compatible with legacy CST (Common Spanning-Tree) and PVST+
+  > if proposal is not received, it treats the other region as legacy
+  > Behaves like Inter-region MST
+- CST Root must be within MST domain
+
+MST Configuration
+- Define the following in MST configuration mode
+  > Region name
+  > Revision number
+  > VLAN to instance mappings
+  
+  spanning-tree mst configuration   !global config
+  revision 1
+  name MST_A
+  instance 1 vlan 10-20
+  instance 2 vlan 21-30
+  instance 3 vlan 31-40
+  spanning-tree mode mst
+  
+  show spanning-tree configuration
+  
+- Enable MST globally
+  > real deployment must start at Root and work out
+
+VTP Version 3 distributes MSTP
+
+MST Path Selection
+- Same election process as CST/PVST
+  > Root bridge 
+    - lowest BID
+  > Root port
+    - lowest cost
+    - lowest upstream BID
+    - lowest port ID
+    
+Changing MST Root Bridge Election
+- Manually change BID priority
+  > spanning-tree mst [instance] priority
+  > lower is better
+- User root bridge macro
+  > spanning-tree mst [instance] root [primary|secondary]
+  - sets local priority based on current root bridge
+- Verification
+  > show spanning-tree mst [instance]
+  > show spanning-tree root
+  
+Changing an MST Port's Role
+- Modify port cost
+  > spanning-tree mst [instance] cost
+  > bandwidth [bps]
+- Modify Bridge ID
+  > spanning-tree mst [instance] priority
+- Modify Port ID
+  > spanning-tree mst [instance] port-priority
+- Verification
+  > show spanning-tree interface [int] detail
+  > show spanning-tree mst [instance] detail
+
+
+operational Bridge Priority = configured priority + sysid 
+sysid = instance number
+
+CIST = used for exchanging control plane; other vlans are here
+
+For Inter-Region CIST
+there will be a Root bridge, and regional root per region
+Instance 0 spans for multiple regions
 
 ==============================================================
