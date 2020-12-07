@@ -1,6 +1,48 @@
 ==================================================================
 Rapid Spanning-Tree Protocol & MST
 
+802.1w - rstp
+802.1D-2004 - current RSTP standard
+
+802.1s - MST
+
+
+RSTP BPDUs - NEW FORMAT and HANDLING
+What Makes RSTP rapid?
+New RSTP Topology Change Process
+
+REMEBER STP RULE: Switch can only have one DP going towards a single collision domain 
+
+New Port Roles
+- Alternate
+  > port received a BPDU from another switch
+- Backup
+  > port received a BPDU from itself
+- Edge
+  > For port fast
+  > when a switch received a BPDU on a port fast interface, SW will disbale port fast on that interface (even if it is configured on show run)
+
+
+NEW BPDU FORMAT
+- Protocol version 2 (was 0 for legacy) for RSTP
+- No more TCN frames
+  > A different frame is now sent instead of the TCN
+- Flag field changes
+  > All flag fields have meaning on RSTP. On legacy, only bits 0 and 7 have values. This is how switch tells if peer is running legacy or rstp
+  > 802.1D bridges drop RSTP BPDUs
+  
+NEW BPDU HANDLING
+- on legacy, Root Bridge generates and sends BPDU and send this out to other switches
+- receiving switches will process the received BPDU (add cost, change bridge ID to their own BID, change port names, etc) then send this out downstream
+- basically, on 802.1d (legacy), BPDUs are only forwarded, after being received on the Root Port
+- No BPDU received? Nothing to forward downstream
+- Upstream switch is declared dead after Max-Age. TCN is now sent
+
+- on 802.1w
+- BPDUs are generate every Hello interval (default 2s) on DP regardless of frequency of BPDUs received on root port
+- upstream switch is declared dead after 3x Hello interval
+- IF 3x Hello interval is longer that Max-Age, Max-Age will be used to declare a switch is dead
+  > show spanning-tree
 
 ==================================================================
 RSTP Synchronization Process
