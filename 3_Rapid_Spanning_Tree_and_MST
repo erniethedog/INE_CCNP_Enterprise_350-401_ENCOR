@@ -47,14 +47,27 @@ NEW BPDU HANDLING
 ==================================================================
 RSTP Synchronization Process
 
+Proposal and Agreements (CAN ONLY BE USED FOR P2P; CANNOT BE USED ON SHARED INTERFACES)
+- Bidirectional BDPU transmission with "proposal" bit set (I want to be the Root Bridge)
+- BPDU transmission with 'agreement' bit set (from SW that is going to be the root bridge)
 
 ==================================================================
 RSTP Topology Changes
 
+- TC Flag is set on the BPDU frame
+- Generated when non-edge port goes FORWARDING
+- "broadcasted" on the network by the initiator (not by the Root anymore like in legacy)
+  > sent on all root ports
+  > sent on all designated ports that are non-edge
+- Flush most of the CAM entries in the network IMMEDIATELY
+  > Edge ports are not flushed
+  > MACs on ports receiving Topology Change BPDU are not flushed
+  > More flooding but restore connectivity immediately
 
 ==================================================================
 Multiple Spanning-Tree Protocol
 
+ - SAME on previous notes
 
 ==================================================================
 MST Regions & BPDU Details
