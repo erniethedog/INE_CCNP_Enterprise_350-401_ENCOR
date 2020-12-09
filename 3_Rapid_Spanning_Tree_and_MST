@@ -72,13 +72,128 @@ Multiple Spanning-Tree Protocol
 ==================================================================
 MST Regions & BPDU Details
 
+- MST defines a Region as bridges that agree upon
+  > Region Name
+  > Revision Number (does not dynamically change)
+    - personal note by Keith/INE, this is like some sort of security/password in which every SW should agree
+  > VLAN to STP instance mappings
+  
+Creating MST Region
+- Following steps must be done manually on all switches that will be running MST
+- VTPv3 may be used to propagate this config among switches
+
+! global config
+spanning-tree mst configuration
+name [MST_NAME]
+
+- Once you create your MST Region, Instance 0 exists by default and all VLANs are in this instance
+  > No load balancing possible yet
+- Set the Revision Number and bundle VLANs into MST instances
+
+! under spanning-tree mst configuration
+revision 1
+instance 1 vlan 101-200   !!You can start with any instance number. All SW just have to agree on the instance number
+instance 2 vlan 201-300 
+
+- Instances you create manually are called MSTI = MST Instance
+- Remember than instance O (called IST) is the default instance. IST becomes relevant for interoperation with SW NOT running MST
+- Any VLANs not moved in the MSTI will remain in IST
+
+- Enable MST Globally
+  > Real deployment must start at the Root and branch out
+
+!global config
+spanning-tree mode mst
+
+
+
+PVST and MST BPDU DIFFERENCES
+- PVST
+  > Each instance of STP (per VLAN) transmits its own BPDU
+  > Root Bridge for network with 20 VLANs will generate 20 BPDUs on each VLAN, every hello time (2s)
+- MST
+  > A single BPDU is generated which contains MST information for all instances relevant to an interface
+  > Size of BPDU is variable depending on how many Mrecords it contans
+
+MRecord
+- An MRecord for a given instance contains:       
+  > All STP Parameters for an MSTI
+    - Root BID for that instance
+    - Sending BID for that instance
+    - Root Cost for that instance
+    - ETC ETC ETC
+- MSTIs are RSTP instnaces that only exist inside the region
+- They don't interact directly with other STPs outside of the region
+- Only one instance has timer related parameters (the IST instance)
+- Portion of the BPDU that contains data for all MSTI     
+
+
+On BPDU Capture (Wireshark)
+- MST is version 3
+- RSTP is version 2 (version 1 is also RSTP, but it was changed to 2)
+- 802.1D is version 0
+
+
+MST BPDU on TRUNK PORTS
+- MRecord is propagated on trunks which allow that VLAN, including Instance-0
+
+MST BPDU on Access Ports
+- Mrecord for instance-0 (IST)
+- Mrecord for VLAN in which that port belongs
 
 ==================================================================
 MST Path Selection & Configuration
 
 
+PATH SELECTION
+- Same election process as CST/PVST
+- Each Instance within a Region elects:
+  > Root Bridge (per instance)
+    - Lowest BID wins
+  > Root Port (per bridge)
+    - lowest cost
+    - lowest upstream BID
+    - lowest upstream port ID
+  > Root port selection within MST region for IST dependeng on location of IST Master
+
+Long Path Cost
+- 802.1t defines new default 32 bit costs based on port bandwidth
+  > spanning-tree pathcost method [long|short]  !under global config. long = 32 bits; short = 16 bits
+- 802.1s MST uses these new values (by default)
+
+BW (Mbps)     New Value       Orig Value
+10            2 000 000           100
+100           200 000             19
+1000           20 000              4
+10 000          2 000              2
+
+Chaning MST Root Bridge Election
+- Manually change BID priority
+  > spanning-tree mst [instance] priority
+  > lower is better
+- Use root bridge macro
+  > spanning-tree mst [instance] root [primary|secondary]
+  > sets local priority based on current Root Bridge
+- Verification
+  > show spanning-tree mst [instance]
+  > show spanning-tree root
+
+Changing an MST Port's Role
+- Modify the port's cost
+  > spanning-tree mst [instance] cost
+  > bandwidth [bps]   !interface level
+- Modify the Bridge ID
+  > spanning-tree [instance] priority
+-Modify the Port ID
+  > spanning-tree mst [instance] port-priority
+- Verification
+  > show spanning-tree interface [int] detail
+  > show spanning-tree mst [instance] detail
+
 ==================================================================
 MST Boundary Ports
+
+
 
 
 ==================================================================
