@@ -193,19 +193,134 @@ Changing an MST Port's Role
 ==================================================================
 MST Boundary Ports
 
+INTRA vs INTER REGION
 
+- Intra Region
+  > Details of the region are known within the region
+  > VLAN to MSTIs are manually defined
+  > Undefined VLANs fall into CIST (MST 0)
+  
+- Inter Region
+  > Details between regions are NOT known (one detail is not matching)
+  > Different regions see each other as virtual bridges
+  > Intra-region MSTIs are collapsed into CIST
+    - Even if no VLANs are assigned in Instance-0, the instance will always be there.
+    - Instance-0 is only way Spanning tree can talk outside of its instance
+    
+Internal and Boundary Ports
+- Internal Port is one that is connected to an MST peer
+- Bounday Port = port connected to another switch that is not capable of joining our LOCAL MST Region
+- A port is considered "Boundary" by MST if:
+  > MST BPDUs sent/received that dont match
+    - Mismatched MST Region Names
+    - Mismatched MST Revision number
+    - Mismatched Configuration Digest values
+  > We sent out an MST BPDU, but we received a regular 802.1d (or 802.1w) BPDU
+  
+show spanning-tree mst 1
+! Boundary ports will have "Bound (STP_VER)" under the Type category
+! ie. P2P Bound(PVST)
+  
+- MST BPDUs cannot be transmitted on Boundary ports
+- Must scale back to Rapid-PVST or PVST+ on the boundary port
+- Boundary ports normally displayed via "show" commands only on Blocking and Root ports. NOT Designated Ports
+
+TROUBLESHOOTING MST BOUNDARY PORTS
+- Look at topology. Is the switch expected NOT to run MST?
+- Not expected? 
+  > Check MST configs on peer switches
+  > Check IOS
+    - STANDARD vs Pre-STANDARD MST
+    
+STANDARD vs Pre-STANDARD MST (not going to be on exam)
+- Syslogs and "show" output indicate reception of "Pre-Standard MST"
+- Cisco implemented 802.1s MST on switches while it was still in DRAFT status
+- Slight changes to MST BPDY formated were implemented in the standard version causing inconsistencies
+  1. Version 3 length field in pre-standard BPDU sent as 0000F
+  2. Pre-Standard MST config identifier does not have the Format Selector set to 00F
+  3. Pre-Standard MST config identifier digest signature keys do not comply with IEEE 802.1s
+  4. Pre-Standard MRecords are not 16 bytes long
+
+Best Options:
+- Upgrade IOS
+- Or go to newer switch and degrade MST to pre-standard
+  > spanning-tree mst pre-standard  !!interface config
+    
+
+Full BPDU is NOT sent to boundary ports towards non-MST peers.
+Only the flags, and Instance-0 information are sent
+
+
+MST INTEROPERABILITY
+- MST is backwards compatible with legacy CST and PVST+
+- Behaves like Inter-region MST
+- CST Root SHOULD BE WITHIN THE MST DOMAIN
+  > Load-balancing capability is lost if Root is within the CST domain
 
 
 ==================================================================
 MST: The Virtual-Bridge
 
+A "VIRTUAL" BRIDGE
+- Details of the MST Region and "hidden" by other regions and CST domains
+- Switch outside of the region do not have visibility to:
+  > Actual cumulative cost to reach IST Root Bridge (if within MST Region)
+  > Bridge-IDs of non-Root Bridges
+
+The MST Region is like a single giant switch
+
+CIST REGIONAL ROOT
+- IST elects 2 Root Bridges
+  > Main Root bridge (root for entire CST and INSTANCE-0)
+  > CIST Regional Root (also called IST MASTER)
+- Within MST Region, all MST switches select their IST Root port based on the location of the IST MASTER
+
+IST MASTER ELECTION
+- If CST Root Bridge is elected inside MST region, then CST Root = IST Master
+- If CST Root Bridge is located on non-MST switch, IST MASTER = MST Switch with the lowest cost to Root
 
 ==================================================================
 IST Master & Root Port Selection
 
+Scenario 1: MST Switch = CST Root
+  - MST Root Bridge is also the IST MASTER
+  - Non-Root MST bridges will send the Bridge ID to outside the MST region
+    > BPDU sent with values of BID as the Root Bridge. cost = 0
+
+Scenario 2: CST Switch = CST Root
+  - MST domain will select an IST Master to get to the CST Root bridge
 
 ==================================================================
 MST - PVST Simulation
+
+- MST was designed by IEEE to be compatible with CST (802.1d and RSTP)
+- Cisco modifies their implementation of MST to also be compatible with PVST
+- If multiple BPDUs are received on an MST Switch interface, we must be connected to a PVST switch
+- When detecting connection to PVST switch, MST switch will do the following:
+  > Mark port as boundary
+  > Replicate IST BPDY N-times (where "N" is quantity of VLANs carrier on that port)
+  > NOTE THAT IST WILL STILL CONTROL THE PORT STATE
+  
+PVST Simulation: MST Root Bridge
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ==================================================================
