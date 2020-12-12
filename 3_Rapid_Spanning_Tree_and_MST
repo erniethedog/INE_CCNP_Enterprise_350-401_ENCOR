@@ -302,25 +302,38 @@ MST - PVST Simulation
   > NOTE THAT IST WILL STILL CONTROL THE PORT STATE
   
 PVST Simulation: MST Root Bridge
+- MST Region determines lowest Bridge ID for instance-0 among all MST switches
+- Compares MST/IST Bridge-ID against PVST VLAN-1 Bridge-ID to determine "winner" (ie Root Bridge of CST)
+  > MST Region has overall lowest IST Bridge-ID = Root Bridge is within MST Region (Recommended)
+    - BENEFIT of having Root Bridge within MST Region = PVST Load Balancing
+  > VLAN-1 within PVST has lowest overall Bridge ID = Root bridge is within PVST domain (NOT RECOMMENDED)
 
+PVST-Inconsistent (NOT INCLUDED IN TEST)
+- Instance-0 (IST) is very particular about how it interacts with PVST+
+- Very easy fir IST to get 'confused' and go into the "PVST-Inconsistent" state if PVST+ is not designed in a particular way
+- These are called PVST-Simulation Rules
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+PVST Simulation Failure
+- Error Message: SPANTREE-2-PVSTSIM_FAIL
+- Blocking designated port INT_NAME: Inconsistent superior PVST BPDU received on VLAN VLAN_ID, claiming root MAC_ADDRESS
+- under "show spanning-tree mst"
+  > Type: P2P Bound(PVST) *PVST_Inc
+  > Role: Designated
+  > Status: Blocking
+  
+To Prevent PVST-Inconsistent, the following rules must be followed:
+- MST Instance 0 Bridge ID should be lower than PVST VLAN-1 Bridge ID
+- Bridge ID on PVST for VLANs (2-4094) should be HIGHER than MST Instance 0, but lower than PVST VLAN-1
+  > If Bridge ID for MST Instance 0 is lower than PVST VLAN-1 Bridge ID, it should be consistent for all other PVST VLANS BID
+    - ie. MST Instance 0 BID should be lower than all PVST VLANs BID
+  > OR Vice Versa: MST Instance 0 BID > PVST VLANs (ALL) BID
+  
+Dan's Notes:
+The following will AVOID PVST-INCONSISTENT
+- MST Instance 0 BID < PVST VLAN 1 BID < PVST all other VLAN BID
+  > MST Instance 0 is the Root Bridge (Recommended)
+- MST Instance 0 BID > PVST VLAN 1 BID > PVST all other VLAN BID
+  > PVST VLAN 1 is the Root Bridge
 
 
 ==================================================================
