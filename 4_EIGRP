@@ -12,6 +12,7 @@ Classic EIGRP
 - Administrative Distance of 90
 - Well known Multicast address for EIGRP process = 224.0.0.10
 - Internet Protocol 88 (own transport)
+- uses Realiable Transport Protocol (RTP) - not to be confused with Real Time Protocol
 
 BGP uses TCP under port 179
 RIP uses UDP
@@ -41,6 +42,8 @@ Verifying EIGRP
   > show ip eigrp neighbors [detail]
   > Queue count should be 0 if converged. If queue count is NOT 0, neighbors are not adjacent
   > EIGRP uses multicast and unicast
+  > Sequence number = increment to ack the updates. basically, peers have to agree on this seq num. part of protocol reliability
+  > SRTT = Smooth Round Trip Time - one way to check if there are layer 1 issues
 - Verifying  EIGRP topology
   > show ip eigrp topology [all-links]
     - By default, only the successors are show. need all-links to show the other routes
@@ -90,6 +93,9 @@ show ip eigrp topology [IP] [subnet mask]
 show ip route [eigrp]
 - status code of D
 
+EIGRP timers does not need to match for the protocol to work
+Normally, these are set as the same, but it is not needed
+There is always BFD or layer 1 link detection to check adjacencies
 
 ======================================================================
 EIGRP NAMED MODE
