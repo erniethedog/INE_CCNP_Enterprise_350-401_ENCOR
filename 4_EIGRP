@@ -5,6 +5,90 @@ Configuring Classic EIGRP
 Verifying EIGRP Adjacencies
 Verifying EIGRP Topology
 
+Classic EIGRP 
+- EIGRP prior to IOS 15.X
+- AKA EIGRP Autonomous System Configuration
+  > Process name is the AS number
+- Administrative Distance of 90
+- Well known Multicast address for EIGRP process = 224.0.0.10
+- Internet Protocol 88 (own transport)
+
+BGP uses TCP under port 179
+RIP uses UDP
+
+
+
+Enabling Classic EIGRP
+- Enable global process
+  > router eigrp [AS]
+  > AS number must match to be adjacent
+- Enable the interface process
+  > network [address] [wildcard]
+    - no wildcard mask, it defaults to classful mask
+    - This does not mean that EIGRP advertises the subnet. EIGRP is just turned ON on interface/s with that subnet
+    - But if EIGRP is turned on on that interface, EIGRP advertises that interface
+    - In BGP, the network statement is used to advertise the prefix
+                        
+  > similar to OSPF network statement
+
+Verifying EIGRP
+- Verify EIGRP
+  > show ip eigrp interfaces [detail]
+  > show ip protocols
+- Verify EIGRP transport
+  > debug eigrp packet [hello|ack|update|query|reply...]
+- Verify neighbor adjacencies
+  > show ip eigrp neighbors [detail]
+  > Queue count should be 0 if converged. If queue count is NOT 0, neighbors are not adjacent
+  > EIGRP uses multicast and unicast
+- Verifying  EIGRP topology
+  > show ip eigrp topology [all-links]
+    - By default, only the successors are show. need all-links to show the other routes
+  > show ip eigrp topology [prefix/len]
+  
+Goes to selection process - feasibility condition
+the ones who win the feasib condition become the successors
+Successor are the candidates installed on the Routing Table
+  
+This is different to OSPF, ISIS, and BGP
+Separation of information used for advertising and info to route traffic
+
+OSPF - sync database within the are. not necessarily mean it is used for routing
+
+For EIGRP, since EIGRP does not have a overall view of the network. They only know advertisement from directly connected neighbors
+If EIGRP is learning a route, but it does not install on the routing table, it means EIGRP does not advertise the route
+
+
+show ip protocols
+- shows protocols running
+- under EIGRP
+  > NSF - non stop forwarding
+  > MTR - Multiple Topology Routing - for EIGRP Named Mode
+  > Routing for Networks
+    - see networks in which EIGRP is running
+  > Routing Information Sources
+    - to check if you are receiving routes from a neighbor
+    - list of neighbors that are advertising on EIGRP
+
+
+Forming Neighbor adjacency is on multicast
+once neighbors are adjacent, unicast is used to send updates to peers
+Source IP is, of course, the router ID
+
+
+show ip eigrp topology [IP] [subnet mask]
+  - State = Passive. Used for forwarding. EIGRP is converged. Active = running reconvergence process
+  - Feasible Distance = Metric
+  - Number of Successors
+  - (Feasible Distance / Advertised Distance)
+    > FD - Metric the router is using
+    > AD - Metric the upstream neighbor is using
+    > Normally FD > AD, since router needs to consider values in calculation to get to the upstream neighbor
+    > If FD < AD, EIGRP will think that there is a loop in the network
+
+
+show ip route [eigrp]
+- status code of D
 
 
 ======================================================================
