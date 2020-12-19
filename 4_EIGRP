@@ -199,6 +199,69 @@ In BGP, attribute is owned by the route, not by the link
 ======================================================================
 EIGRP WIDE METRICS
 
+- only on Named Mode
+- running by default
+
+Classic EIGRP BW Metric Problem
+- As BW increases, visibility is lost
+  > 1GigE = 2560
+  > 10G = 256
+  > 20G = 256
+  > 40G = 256
+  > 100G = 256
+
+Delay Problem
+- Min configurable delay in IOS is 10us (10 microseconds)
+- As BW increases, visibility is lost
+  > 1GigE = 10us
+  > 10G = 10us
+  > 20G = 10us
+  > 40G = 10us
+  > 100G = 10us
+
+EIGRP Wide Metrics
+- Wide Metric is now 64 bits
+- BW problem fixed by scaling higher
+  > WIDE_EIGRP_BW = 10^7 * 65536 / INT_BW
+  > INT_BW in Kbps
+- Delay Problem fixed by moving to picoseconds
+  > WIDE_EIGRP_DLY = DLY_PICO * 65536 / 10^6
+  
+EIGRP Wide Metric Formula
+- BW is now Throughput
+  > Throughput = K1 * (EIGRP_BANDWIDTH * EIGRP_WIDE_SCALE) / Interface_BW (Kbps)
+- Delay is now Latency
+  > Latency = K3 * (DELAY * EIGRP_WIDE_SCALE) / EIGRP_DELAY_PICO
+- Default metric is still the same formula
+  > metric = (K1 * min(Throughput)) + (K3 * sum(Latency))
+
+EIGRP_WIDE_SCALE = 65536
+EIGRP_CLASSIC_SCALE = 256
+EIGRP_RIB _SCALE = 128 
+  > some metrics are too large to be displayed on the routing table
+  > this is used to scale down the metric, then install it on the RIB (routing table)
+  > metric rib-scale [VALUE]        !under eigrp named config
+  > this is only locally significant on the router
+  
+EIGRP Wide Metric Config
+- Enable EIGRP named mode
+- Wide metrics automatically enabled
+- Still backwards compatible with classic
+
+
+EXAMPLE Calculation:
+Min BW is 1000000 Kbit
+Total delay is 11250000 picoseconds
+
+WIDE_EIGRP_BW = 10^7 * 65536 / 1000000
+              = 655360
+WIDE_EIGRP_DLY = 11250000 * 65536 / 10^6
+               = 737,280
+Metric = (K1 * 655360) + (K3 * 737,280)
+       =  1,392,640
+RIB = Metric / EIGRP_RIB _SCALE
+    = 10880  <-------!!!! This is the metric seen on the routing table
+       
 
 ======================================================================
 EIGRP TRAFFIC ENGINEERING AND UNEQUAL COST LOAD BALANCING
