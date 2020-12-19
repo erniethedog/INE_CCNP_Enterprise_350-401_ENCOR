@@ -155,6 +155,47 @@ Converting EIGRP Classic to Named Mode
 EIGRP CLASSIC METRIC CALCULATION
 
 
+- EIGRP Classic Metric Calculation
+  > lowest composite metric based on
+    - Bandwidth
+      > Inverse lowest bandwidth along path in Kbps scaled by (10^7 * 256)
+        - ie. BW is 1000000 Kbps
+        - (10^7 * 256) / 1000000
+        - BW = 2560
+    - Delay
+      > Cumulative delay along path in tens of microseconds (us) scaled by 256
+        - ie. Delay is 5010 microseconds
+        - Delay = 501 * 256 = 128256
+    - Load
+      > highest load along path
+    - Reliability
+      > lowest reliability along path
+  > normally, only BW and Delay are used, since Load and Reliabiity change over time
+  > Composite metric is computed as 
+    - metric = [k1 * BW +(k2 * BW)/(256 - load) + k3 * delay]
+    - if k5 != 0, metric = metric * [k5/(reliability + k4)]
+  > K values allow for manual weighting
+    - defaults are K1 = 1, K2 = 0, K3 = 1, K4 = 0, K5 = 0
+    - implies default composite is (BW + delay)
+  > can be modified with "metric weights" command
+    - must match for adjacency to establish
+
+
+Note that BW value on the link is also used on other applications, like QoS or calculations by neighboring routers
+  - BW is used on a per prefix (routers connected to the same switch under one subnet)
+So, Delay is generally modified for traffic engineering (if you want to chose one path over the other)
+  - Delay is cumulative on a hop by hop basis
+
+Command:
+metric weights [TOS] [k1] [k2] [k3] [k4] [k5]
+!k6 - used in named mode
+metric weights 0 0 0 1 0 0
+!changing K1 value to 0
+
+Note:
+In IGP, you change link attribute, route is affected
+In BGP, attribute is owned by the route, not by the link
+
 ======================================================================
 EIGRP WIDE METRICS
 
