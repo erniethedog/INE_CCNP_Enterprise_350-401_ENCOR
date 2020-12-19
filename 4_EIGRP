@@ -115,6 +115,7 @@ Configuration
   > router eigrp [name]
   > name is not the AS number
   > ie. router eigrp DANCEDRIC
+    - Name is locally significant
 - Enable the address-family
   > address-family ipv4 unicast autonomous-system 1
 - Enable the interface process
@@ -144,27 +145,14 @@ Converting EIGRP Classic to Named Mode
 > Conversion is hitless 
   - performs graceful restart automatically. neighbor will say the it needs to restart adjacency
   - adjacencies will flap but data plane will still work
-  - Graceful restart = Non-stop forwarding
-    > NSF = cisco proprietary term
+  - Graceful restart = Non-stop forwarding = non-stop routing
+    > NSF / NSR = cisco proprietary term
     > graceful restart = standard term
 > supports both IPv4 and IPv6 EIGRP
   - can be in different AS
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ======================================================================
-EIGRP CLASSING METRIC CALCULATION
+EIGRP CLASSIC METRIC CALCULATION
 
 
 ======================================================================
