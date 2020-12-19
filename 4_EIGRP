@@ -100,6 +100,68 @@ There is always BFD or layer 1 link detection to check adjacencies
 ======================================================================
 EIGRP NAMED MODE
 
+- also called EIGRP Multi-AF (Address Family) Mode
+- Better configuration heirarchy
+  > old syntax is not that intuitive
+  > all config now goes under global process
+- better feature parity between ipv4 and ipv6
+  > syntax is unified for IPv4 and IPv6 under one process
+  > uses address-families to distinguish v4 and v6
+- Newer feature arent supported in Classic Mode
+  > Wide Metrics, IPv6 VRF Lite, etc
+  
+Configuration
+- Enable the global process
+  > router eigrp [name]
+  > name is not the AS number
+  > ie. router eigrp DANCEDRIC
+- Enable the address-family
+  > address-family ipv4 unicast autonomous-system 1
+- Enable the interface process
+  > network [address] [wildcard]
+  > similiar to OSPF network statement
+- Customize the interface
+  > af-interface [default|int]
+    - default - configuration for all interfaces
+
+! topology base = not using multiple topology
+- All interfaces are under base topology by default
+- features that is global on the process goes under topology base, ie. redistribute list
+
+
+MTR = Multiple Topology Routing
+- like MPLS traffic engineering
+- ie. different topology for voice, multicast, and video
+
+Wide Metrics - used in Named Mode
+> show ip eigrp topology [network]
+  - Delay is in picoseconds
+> very granular delay values to accomodate high speed links like 100GigE
+> automatic on the process
+
+Converting EIGRP Classic to Named Mode
+> eigrp upgrade-cli
+> Conversion is hitless 
+  - performs graceful restart automatically. neighbor will say the it needs to restart adjacency
+  - adjacencies will flap but data plane will still work
+  - Graceful restart = Non-stop forwarding
+    > NSF = cisco proprietary term
+    > graceful restart = standard term
+> supports both IPv4 and IPv6 EIGRP
+  - can be in different AS
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ======================================================================
 EIGRP CLASSING METRIC CALCULATION
