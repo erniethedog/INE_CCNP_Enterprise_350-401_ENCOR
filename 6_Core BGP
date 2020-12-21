@@ -1,0 +1,62 @@
+===================================================
+Core BGP Routing
+
+
+BASIC BGP WORKFLOW
+- Establish TCP transport
+- Establish BGP Peerings
+- Negotiate Address Families
+- Advertise NLRI
+- Apply BGP Policy
+
+
+ESTABLISHING TCP TRANSPORT
+- Unlike IGP, BGP does not use its own transport
+  > Uses TCP Port 179
+- Typically implies either
+  > Peers are directly connected
+  > IGP transport is already established
+  > Label Switched Path (LSP) is already established
+- TTL is a transport consideration
+  > iBGP = TTL is 225
+  > EBGP = TTL is 1 by default
+  > Multihop EBGP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===================================================
+Applying BGP Policy
+
+===================================================
+NLRI Advertisement Rules
+
+===================================================
+BPG Path Selection Rules
+
+===================================================
