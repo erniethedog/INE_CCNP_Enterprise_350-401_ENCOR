@@ -23,13 +23,34 @@ ESTABLISHING TCP TRANSPORT
   > Multihop EBGP
 
 
+Note: MPLS tunnel uses the loopback interface as source and destination IP address
+  > So make sure to have LSP between loopbacks
+  > Check both ipv4 and ipv6
 
 
+ESTABLISHING BGP PEERINGS
+- BGP must agree upon
+  > AS numbers
+    - Global, local, private, confed sub-as, etc
+  > Update Source
+    - Loopback is MPLS tunnel destination
+  > Address Families
+    - IPv4 Unicast, VPNv4 Unicast (MPLS L3 VPN), etc
+  > Misc.
+    - Authentication, TTL Security, etc
+ 
+ 
+NEGOTIATING ADDRESS FAMILIES
+- BGP transport is independent of NLRI
+  > IPv4 transport can be used to advertise IPv6 NLRI
+- Address Family Identifiers/Sub-Address Family Identifiers which NLRI is exchanged
+  > IPv4 unicast, VPNv4 Unicast, VPLS, etc
+- In IOS, IPv4 unicast is default
+  > Can be disabled globally or per-neighbor
+- In IOS XR, AFI/SAFIs must be explicitly defined
 
 
-
-
-
+PART 2 VIDEO
 
 
 
