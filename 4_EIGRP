@@ -267,8 +267,100 @@ RIB = Metric / EIGRP_RIB _SCALE
 EIGRP TRAFFIC ENGINEERING AND UNEQUAL COST LOAD BALANCING
 
 
+EIGRP Feasibility Condition
+- Feasibility Condition (FC) is used to select loop-free backup paths
+  > Paths meeting the FC are pre-computed during DUAL (Diffusing Update ALgorithm)
+- Pre-computed backup paths have multiple advantages
+  > Sub-second reconvergence when primary path fails
+  > Fault isolation (doesnt need flooding event like in OSPF)
+  > Unequal cost load distribution
+    - Not necesssarily used for applications like voice
+    - In practice, UCLB is not that used. Main advantage is that EIGRP has pre-computed backup paths
+
+
+Feasibility Condition High Level Overview
+- First, find the best path
+  > Take the metric of the best path as X
+- Next, find alternate backup paths
+  > Anyone with a metric less than X is closer to the destination than me
+  > Exclude anyone with a metric greater than or equal to X
+    - EIGRP will believe that a loop is present on metrics greater than its own
+
+
+Feasibility Condition Terminology
+- Successor
+  > Best path to a destination
+  > this is the one installed in the routing table    
+- Feasible Distance (FD)
+  > composite metric of best path (successor)
+- Reported Distance (RD) or Advertised Distance
+  > composite metric learned from neighbors
+- Feasible Successors (FS)
+  > Backup paths that meet the Feasibility Condition
+  
+Feasibility Condition in Detail
+- Once best path is chosen, additional paths are examined for backup routes
+- FC finds loop-free backup routes via logic
+  > if RD < FD, path is loop-free and viable backup
+  > eg. if your metric is lower than mine, you are closer to the destination and route is loop-free
+- Paths that meet FC are Feasible Successors (FS)
+  > Only FS can be used for unequal cost load balancing
+  
+On show eigrp toplogy command, FD and RD is shown as
+- Composite metric is (FD/RD)
+
+
+EIGRP Reconvergence
+- Reconvergence differ for paths with or without an FS
+- Paths without an FS
+  > Loss of Successor send route into Active state
+  > Send QUERY to all neighbors
+  > Reconverged when REPLY heard from all neighbors
+- Paths with FS
+  > Loss of Successor does NOT make route Active
+  > FS promoted to Successor
+  > Query NOT generated
+  > Result is sub second convergence
+
+
+NOTE that BFD is normally used to detect down links
+BFD is usually offloaded on the Hardware/ASICs, so, detection is really fast and the router doesnt have to rely on the CPU
+- show bfd neighbor
+- show bfd neighbor [detail]
+  > you can see the registered protocol for the BFD
+  > BFD basically tells upper layer protocols that link is dead
+
+Modifying EIGRP Path Selection
+EIGRP Unequal Cost Load Balancing
+
+
+EIGRP Traffic Engineering
+- Default EIGRP composite metric is BW + delay
+  > based on default K1 and K3 metric weights
+- BW is lowest BW along the path on a per prefix basis
+  > Essentially the BW bottleneck
+  > Hard to predict what a modification will affect
+- Delay is cumulative on a hop-by-hop basis
+  > Easier to influence path selection with
+  > modified with delay interface command
+  
+- check the traffic share in the routing table to check load balancing ratio
+  > 1st route: traffic share count is 48
+  > 2nd route: traffic share count is 1
+  > traffic share ration is 48 to 1
+
+- EIGRP allows load distribution among unequal paths
+  > only FS are candite for load balancing
+- Controlled by variance command
+  > If (FD * variance) > FS, load balancing occurs
+- Traffic share is automatically calculated
+  > Links used in a ratio proportional to their composite metrics
+  > Actual load balancing still controlled by switching path 
+    - EG. CEF per-flow
+
+
 ======================================================================
-EIGRP CLASSING AUTHENTICATION
+EIGRP CLASSIC AUTHENTICATION
 
 
 ======================================================================
