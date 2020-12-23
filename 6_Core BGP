@@ -50,26 +50,56 @@ NEGOTIATING ADDRESS FAMILIES
 - In IOS XR, AFI/SAFIs must be explicitly defined
 
 
-PART 2 VIDEO
+By default, IOS thinks that BGP will be used for global routing
+
+- show ip bgp neighbors
+  > Check "Neighbor Capabilities" for Address family IPv4 Unicast: advertised and received
+  > On IOS XR, 
+    - commands below
+    router bgp 1
+        address-family ipv4 unicast <<<---------------!!!!!!!! This is not present on IOS. Needed to be explicitly stated globally on IOS XR
+        neighbor 1.1.1.1 <<<---------------!!!!!!!! Loopback of peer
+          remote-as 1
+          update-source lo0 <<<---------------!!!!!!!! Loopback peering. unless changed, this defaults to the directly connected IP interface address
+          address-family ipv4 unicast <<<-------------!!!!!!!!! Needs to be specified on a per neighbor basis as well
+          !! Without this, there will be no "neighbor capabilities" information sent to the peer. TCP won't even establish
+          
+    - show bgp ipv4 unicast summary
+    - show bgp summary
+    - show bgp neighbor
+      > look for neighbor capabilities
+    
+    eBGP on IOS XR
+    router bgp 1
+      !address-family ipv4 unicast is already defined globally under prev config. If not, need to add this under router bgp 1
+      neighbor 10.8.11.8
+        remote-as 8
+        address-family ipv4 unicast     !still needed on a per neighbor basis
+
+    eBGP on normal IOS
+    router bgp 8
+      neighbor 10.8.11.11
+      remote-as 1
+
+    bgp log neighbor changes detail <<--------------!! cli logging. not really needed
+    Note that IOS XR generates a log message about routing policy (inbound/outbound)
+    "Unless you change ib/ob routing policies, there wont be updates on the peering"
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ADVERTISING NLRI
+- Once the peering is established and AFI/SAFIs are negotiated, BGP updates are exchanged
+- Updates (NLRI) can be originated multiple ways
+  > Network statement
+  > Redistribution
+  > Conditional Advertisement
+  > Conditional Route Injection
+- IOS XR RPL (Routing Policy Language) is required for EBGP
+  > even if policy is just say "pass"
+- Key NLRI attributes
+  > Prefix/len
+  > Next-hop
+  > VPN Route Distinguisher (RD)
+  > VPN Route Target (RT)
 
 ===================================================
 Applying BGP Policy
