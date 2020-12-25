@@ -104,6 +104,90 @@ ADVERTISING NLRI
 ===================================================
 Applying BGP Policy
 
+- advertising NLRI on regular IOS
+router bgp 1
+  network 1.1.1.1 mask 255.255.255.255
+  
+- advertising NLRI on IOS XR
+  > either globally under "router BGP AS" > AFI
+  > OR under neighbor statement > AFI
+
+router bgp 1
+  address-family ipv4 unicast
+    ! ADVERTISE HERE  <<---------------!!!!!!!!!!!!!
+    ! network 11.11.11.11/32 <<---------------!!!!!!!!!!!!! example
+  neighbor 1.1.1.1
+    remote-as 1
+    update source loopback0
+    address-family ipv4 unicast
+      ! ADVERTISE HERE <<---------------!!!!!!!!!!!!!
+      ! network 11.11.11.11/32 <<---------------!!!!!!!!!!!!! another example
+
+- policy change needs to go to the neighbor statement
+- "show bgp" in IOS XR = "show ip bgp" in regular IOS
+
+- Applying Policy
+conf t
+route-policy PASS_ALL
+  pass
+  exit
+router bgp 1
+  neighbor 10.8.11.8
+  address-family ipv4 unicast
+    route-policy PASS_ALL out
+    route-policy PASS_ALL in
+  
+
+
+08:00 MIN MARK
+
+
+
+
+
+
+
+
+*****************************************************
+
+RP/0/RP0/CPU0:GW6.SCL2#show run int TenGigE0/0/0/1
+Fri Dec 25 05:44:52.790 UTC
+interface TenGigE0/0/0/1
+ description u335301:digitalrealty.com:TenGigE
+ bandwidth 10000000
+ service-policy output wred-default
+ ipv4 address 152.179.131.141 255.255.255.252
+ load-interval 30
+!
+router bgp 65489
+ neighbor 152.179.131.142
+  remote-as 6973
+  use neighbor-group full-routes
+  password encrypted 09611E1B3922371C595C557D
+  ttl-security
+  address-family ipv4 unicast
+   route-policy in-cust(6973-u335301) in
+   maximum-prefix 1000 75
+  !
+ !
+prefix-set 6973-u335301
+  170.74.0.0/16 le 32
+end-set
+!
+*****************************************************
+
+
+
+
+
+
+
+
+
+
+
+
+
 ===================================================
 NLRI Advertisement Rules
 
