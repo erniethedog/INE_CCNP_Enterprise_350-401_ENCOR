@@ -172,6 +172,80 @@ prefix-set 6973-u335301
   170.74.0.0/16 le 32
 end-set
 !
+prefix-set pfx_no-routes
+  # 255.255.255.255/32 Placeholder because IOS-XR doesn't like empty lists
+  255.255.255.255/32
+end-set
+!
+
+RP/0/RP0/CPU0:GW6.SCL2#show run | begin "neighbor-group full-routes"
+Sun Dec 27 03:55:44.082 UTC
+Building configuration...
+ neighbor-group full-routes
+  description eBGP w/ customers who want full Internet routes
+  address-family ipv4 unicast
+   send-community-ebgp
+   route-policy in-cust(pfx_no-routes) in
+   maximum-prefix 1000 90
+   route-policy out-cust-full(0) out
+  !
+ !
+ neighbor-group default-only
+  description eBGP w/ customers who want 0.0.0.0/0 only
+  address-family ipv4 unicast
+   route-policy in-cust(pfx_no-routes) in
+   maximum-prefix 1000 90
+   route-policy no-routes out
+   default-originate route-policy v4-default
+  !
+ !
+ neighbor-group uunet-global
+  description eBGP w/ customers who want 0.0.0.0/0 + originated by all 70x
+  address-family ipv4 unicast
+   route-policy in-cust(pfx_no-routes) in
+   maximum-prefix 1000 90
+   route-policy out-cust-uu-global(0) out
+  !
+ !
+RP/0/RP0/CPU0:GW6.SCL2#show run formal | inc "neighbor-group full-routes"
+Sun Dec 27 03:56:38.243 UTC
+Building configuration...
+router bgp 65489 neighbor-group full-routes 
+router bgp 65489 neighbor-group full-routes description eBGP w/ customers who want full Internet routes
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast 
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast send-community-ebgp
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast route-policy in-cust(pfx_no-routes) in
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast maximum-prefix 1000 90
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast route-policy out-cust-full(0) out
+router bgp 65489 neighbor-group full-routes-med 
+router bgp 65489 neighbor-group full-routes-med description eBGP w/ customers who want full Internet routes, w/ MEDs
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast 
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast send-community-ebgp
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast route-policy in-cust(pfx_no-routes) in
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast maximum-prefix 1000 90
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast route-policy out-cust-full-meds(0) out
+
+RP/0/RP0/CPU0:GW6.SCL2#show run formal | inc RR
+Sun Dec 27 04:13:52.834 UTC
+Building configuration...
+router bgp 65489 neighbor 140.222.142.19 description RR41.SCL2:65489:up
+router bgp 65489 neighbor 140.222.142.20 description RR42.SAC1:65489:up
+router bgp 65489 neighbor 140.222.142.21 description RR61.SCL2:65489:up
+router bgp 65489 neighbor 140.222.142.22 description RR62.SAC1:65489:up
+router bgp 65489 neighbor 140.222.142.150 description "RR1.SAC1:65489:up"
+router bgp 65489 neighbor 140.222.142.151 description "RR2.SCL2:65489:up"
+RP/0/RP0/CPU0:GW6.SCL2#
+RP/0/RP0/CPU0:GW6.SCL2#show route 8.8.8.8
+Sun Dec 27 04:14:10.683 UTC
+
+Routing entry for 8.8.8.0/24
+  Known via "bgp 65489", distance 200, metric 0
+  Tag 15169, type internal
+  Installed Oct  2 08:51:25.442 for 12w1d
+  Routing Descriptor Blocks
+    140.222.142.170, from 140.222.142.19
+      Route metric is 0
+  No advertising protos.
 *****************************************************
 end vz
 ===================================================
@@ -212,12 +286,16 @@ router bgp 1
     use session-group IBGP_PEERS
     address-family ipv4 unicast
       use af-group IPV4_IBGP_RR_CLIENTS
+  !repeat neighbor statement for neighbors 2.2.2.2, 3.3.3.3, 12.12.12.12, and 13.13.13.13
 
 - In IOS XR documentation, there is af-group, neighbor-group, and session-group
   > af-group pertains to AFI
   > session-group pertains to TCP transport
   > neighbor-group can apply to both of the above at the same time
-
+- Peer Groups are now obsolete. Neighbor groups are the new standard in configuring peers
+  > template = separate options applied to the TCP transport and to address-families
+  > peer group = apply single peer group to neighbor. cant separate
+- show bgp ipv4 unicast neighbors IP_ADDRESS advertised-routes
 
 
 !regular IOS client
@@ -226,7 +304,7 @@ router bgp 1
   template peer-session IBGP_PEERS      !for neighbors. session template is part of the transport (before AFI/SAFI exchange)
     remote-as 1
     update-source loopback0
-  template peer-policy IPV4_IBGP_RR_CLIENTS !for NLRI advertisement
+  template peer-policy IPV4_IBGP_RR_CLIENTS !for NLRI advertisement / AFI options
     route-reflector-client
   neighbor 2.2.2.2 inherit peer-session IBGP_PEERS
   neighbor 3.3.3.3 inherit peer-session IBGP_PEERS
@@ -248,22 +326,12 @@ router bgp 1
 
 Regular IOS show commands
 - show ip bgp summary (defaults to ipv4)
-- show bgp ipv4 unicast summary (same command as above)
+- show bgp ipv4 unicast summary (same command as "show ip bgp summary")
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+- Cluster ID is inherited from the Router ID, unless manually changed
+- If RRs are in the same Cluster ID, an RR receiving an NLRI from another RR in the same Cluster ID, wont be advertising that NLRI to it's peers
+- NLRIs received from RR Client are advertised with the Cluster ID to the other RR clients
 
 
 ===================================================
