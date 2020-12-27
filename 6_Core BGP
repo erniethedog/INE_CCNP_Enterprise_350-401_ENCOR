@@ -144,7 +144,7 @@ router bgp 1
   address-family ipv4 unicast
     route-policy PASS_ALL out
     route-policy PASS_ALL in
-  
+
 ===================================================
 
 NLRI Advertisement Rules
