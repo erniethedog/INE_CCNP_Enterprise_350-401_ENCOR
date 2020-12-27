@@ -23,7 +23,7 @@ VLANS
           : cannot be deleted but can be manually pruned from trunks
           : cannot be pruned by VTP
           : should not be used for actual port assignments
-          
+         
 - Extended VLAN (1006 - 4094)
   > can normally only used in one of 2 cases
     : VTP is configured in transparent mode
