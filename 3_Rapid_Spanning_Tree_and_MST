@@ -30,7 +30,7 @@ NEW BPDU FORMAT
 - Flag field changes
   > All flag fields have meaning on RSTP. On legacy, only bits 0 and 7 have values. This is how switch tells if peer is running legacy or rstp
   > 802.1D bridges drop RSTP BPDUs
-  
+
 NEW BPDU HANDLING
 - on legacy, Root Bridge generates and sends BPDU and send this out to other switches
 - receiving switches will process the received BPDU (add cost, change bridge ID to their own BID, change port names, etc) then send this out downstream
