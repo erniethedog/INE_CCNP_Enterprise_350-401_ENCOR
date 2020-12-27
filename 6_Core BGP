@@ -120,11 +120,19 @@ router bgp 1
     remote-as 1
     update source loopback0
     address-family ipv4 unicast
+      next-hop-self <<---------------!!!!!!!!!!!!! to advertise in iBGP, the routes learned from EBGP. NLRI will now be "best >"
+        !next-hop value is the value on the update source. in this case, loopback0
+        !instead of next-hop, you can just advertise the directly connected link (thru BGP or iGP)
       ! ADVERTISE HERE <<---------------!!!!!!!!!!!!!
       ! network 11.11.11.11/32 <<---------------!!!!!!!!!!!!! another example
 
 - policy change needs to go to the neighbor statement
 - "show bgp" in IOS XR = "show ip bgp" in regular IOS
+- show bgp ipv4 unicast summary
+  > look for the exclamation mark at the St/PfxRcD
+  > neighbors marked with "!" wont receive and send routes
+    - policies are not applied or incorrectly applied
+
 
 - Applying Policy
 conf t
@@ -137,16 +145,6 @@ router bgp 1
     route-policy PASS_ALL out
     route-policy PASS_ALL in
   
-
-
-08:00 MIN MARK
-
-
-
-
-
-
-
 
 *****************************************************
 
@@ -175,21 +173,98 @@ prefix-set 6973-u335301
 end-set
 !
 *****************************************************
-
-
-
-
-
-
-
-
-
-
-
-
-
+end vz
 ===================================================
+
 NLRI Advertisement Rules
+- Advertisement rules change depending on peering type
+  > EBGP
+  > iBGP
+  > iBGP RR Client
+  > iBGP RR Non-Client
+  > Confed EBGP
+- Next-hop rules change depending on peering and AFI/SAFI
+  > EBGP to iBGP in IPv4/IPv6 Unicast
+  > EBGP to iBGP in VPNv4/VPNv6 Unicast
+  > iBGP to iBGP
+  > Multihop EBGP in VPNv4/VPNv6 Unicast
+
+
+Configuring Route Reflector using Template config
+
+!IOS XR
+conf t
+router bgp 1
+  address-family ipv4 unicast
+    network 11.11.11.11/32
+  neighbor 10.8.11.8        <---------!!! EBGP. not related to RR
+    remote-as 8
+    address-family ipv4 unicast
+      route-policy PASS_ALL in
+      route-policy PASS_ALL out
+  session-group IBGP_PEERS
+    remote-as 1
+    update-source loopback0
+  af-group IPV4_IBGP_RR_CLIENTS address-family ipv4 unicast
+    next-hop-self
+    route-reflector-client
+  neighbor 1.1.1.1
+    use session-group IBGP_PEERS
+    address-family ipv4 unicast
+      use af-group IPV4_IBGP_RR_CLIENTS
+
+- In IOS XR documentation, there is af-group, neighbor-group, and session-group
+  > af-group pertains to AFI
+  > session-group pertains to TCP transport
+  > neighbor-group can apply to both of the above at the same time
+
+
+
+!regular IOS client
+router bgp 1
+  network 1.1.1.1 mask 255.255.255.255
+  template peer-session IBGP_PEERS      !for neighbors. session template is part of the transport (before AFI/SAFI exchange)
+    remote-as 1
+    update-source loopback0
+  template peer-policy IPV4_IBGP_RR_CLIENTS !for NLRI advertisement
+    route-reflector-client
+  neighbor 2.2.2.2 inherit peer-session IBGP_PEERS
+  neighbor 3.3.3.3 inherit peer-session IBGP_PEERS
+  neighbor 12.12.12.12 inherit peer-session IBGP_PEERS
+  neighbor 13.13.13.13 inherit peer-session IBGP_PEERS
+  neighbor 11.11.11.11 inherit peer-session IBGP_PEERS
+  adress-family ipv4 unicast
+    neighbor 2.2.2.2 inherit peer-policy IPV4_IBGP_RR_CLIENTS
+    neighbor 3.3.3.3 inherit peer-policy IPV4_IBGP_RR_CLIENTS
+    neighbor 12.12.12.12 inherit peer-policy IPV4_IBGP_RR_CLIENTS
+    neighbor 13.13.13.13 inherit peer-policy IPV4_IBGP_RR_CLIENTS
+    neighbor 11.11.11.11 inherit peer-policy IPV4_IBGP_RR_CLIENTS
+    neighbor 2.2.2.2 activate     <-------------!!! activate is automatic on the router. Use "no bgp default ipv4-unicast" to disable automatic activation of neighbors
+    neighbor 3.3.3.3 activate
+    neighbor 12.12.12.12 activate
+    neighbor 13.13.13.13 activate
+    neighbor 11.11.11.11 activate
+  
+
+Regular IOS show commands
+- show ip bgp summary (defaults to ipv4)
+- show bgp ipv4 unicast summary (same command as above)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ===================================================
 BPG Path Selection Rules
