@@ -145,109 +145,6 @@ router bgp 1
     route-policy PASS_ALL out
     route-policy PASS_ALL in
   
-
-*****************************************************
-
-RP/0/RP0/CPU0:GW6.SCL2#show run int TenGigE0/0/0/1
-Fri Dec 25 05:44:52.790 UTC
-interface TenGigE0/0/0/1
- description u335301:digitalrealty.com:TenGigE
- bandwidth 10000000
- service-policy output wred-default
- ipv4 address 152.179.131.141 255.255.255.252
- load-interval 30
-!
-router bgp 65489
- neighbor 152.179.131.142
-  remote-as 6973
-  use neighbor-group full-routes
-  password encrypted 09611E1B3922371C595C557D
-  ttl-security
-  address-family ipv4 unicast
-   route-policy in-cust(6973-u335301) in
-   maximum-prefix 1000 75
-  !
- !
-prefix-set 6973-u335301
-  170.74.0.0/16 le 32
-end-set
-!
-prefix-set pfx_no-routes
-  # 255.255.255.255/32 Placeholder because IOS-XR doesn't like empty lists
-  255.255.255.255/32
-end-set
-!
-
-RP/0/RP0/CPU0:GW6.SCL2#show run | begin "neighbor-group full-routes"
-Sun Dec 27 03:55:44.082 UTC
-Building configuration...
- neighbor-group full-routes
-  description eBGP w/ customers who want full Internet routes
-  address-family ipv4 unicast
-   send-community-ebgp
-   route-policy in-cust(pfx_no-routes) in
-   maximum-prefix 1000 90
-   route-policy out-cust-full(0) out
-  !
- !
- neighbor-group default-only
-  description eBGP w/ customers who want 0.0.0.0/0 only
-  address-family ipv4 unicast
-   route-policy in-cust(pfx_no-routes) in
-   maximum-prefix 1000 90
-   route-policy no-routes out
-   default-originate route-policy v4-default
-  !
- !
- neighbor-group uunet-global
-  description eBGP w/ customers who want 0.0.0.0/0 + originated by all 70x
-  address-family ipv4 unicast
-   route-policy in-cust(pfx_no-routes) in
-   maximum-prefix 1000 90
-   route-policy out-cust-uu-global(0) out
-  !
- !
-RP/0/RP0/CPU0:GW6.SCL2#show run formal | inc "neighbor-group full-routes"
-Sun Dec 27 03:56:38.243 UTC
-Building configuration...
-router bgp 65489 neighbor-group full-routes 
-router bgp 65489 neighbor-group full-routes description eBGP w/ customers who want full Internet routes
-router bgp 65489 neighbor-group full-routes address-family ipv4 unicast 
-router bgp 65489 neighbor-group full-routes address-family ipv4 unicast send-community-ebgp
-router bgp 65489 neighbor-group full-routes address-family ipv4 unicast route-policy in-cust(pfx_no-routes) in
-router bgp 65489 neighbor-group full-routes address-family ipv4 unicast maximum-prefix 1000 90
-router bgp 65489 neighbor-group full-routes address-family ipv4 unicast route-policy out-cust-full(0) out
-router bgp 65489 neighbor-group full-routes-med 
-router bgp 65489 neighbor-group full-routes-med description eBGP w/ customers who want full Internet routes, w/ MEDs
-router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast 
-router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast send-community-ebgp
-router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast route-policy in-cust(pfx_no-routes) in
-router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast maximum-prefix 1000 90
-router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast route-policy out-cust-full-meds(0) out
-
-RP/0/RP0/CPU0:GW6.SCL2#show run formal | inc RR
-Sun Dec 27 04:13:52.834 UTC
-Building configuration...
-router bgp 65489 neighbor 140.222.142.19 description RR41.SCL2:65489:up
-router bgp 65489 neighbor 140.222.142.20 description RR42.SAC1:65489:up
-router bgp 65489 neighbor 140.222.142.21 description RR61.SCL2:65489:up
-router bgp 65489 neighbor 140.222.142.22 description RR62.SAC1:65489:up
-router bgp 65489 neighbor 140.222.142.150 description "RR1.SAC1:65489:up"
-router bgp 65489 neighbor 140.222.142.151 description "RR2.SCL2:65489:up"
-RP/0/RP0/CPU0:GW6.SCL2#
-RP/0/RP0/CPU0:GW6.SCL2#show route 8.8.8.8
-Sun Dec 27 04:14:10.683 UTC
-
-Routing entry for 8.8.8.0/24
-  Known via "bgp 65489", distance 200, metric 0
-  Tag 15169, type internal
-  Installed Oct  2 08:51:25.442 for 12w1d
-  Routing Descriptor Blocks
-    140.222.142.170, from 140.222.142.19
-      Route metric is 0
-  No advertising protos.
-*****************************************************
-end vz
 ===================================================
 
 NLRI Advertisement Rules
@@ -337,4 +234,265 @@ Regular IOS show commands
 ===================================================
 BPG Path Selection Rules
 
+Applying BGP Policy
+- Path Selection rules are generally the same between AFI/SAFIs
+  > Next-hop (related to update source and next-hop-self)
+  > Weight (highest weight)
+  > Local Preference (highest loc pref)
+  > Originated locally (originated on a local router > learned from peer)
+  > AS Path (shortest path is better)
+  > Origin (compares how BGP learned about a path originally)
+    - IGP - the path was learned by BGP via the network statement and is interior to the originating Autonomous System
+    - INCOMPLETE - the path was learned BGP in an unknown fashion, typically via Redistribution
+    - IGP  >  INCOMPLETE
+  > MED (lower is better)
+  > Path (External over Internal)
+  > IGP metric to Next-hop (lower is better)
+  > Multipath (If you configure the maximum-paths command to allow more than one path to be installed, BGP will use the IGP to load balance to the associated destination prefix.)
+    config below:
+    conf t
+      router bgp 1
+        address-family ipv4 unicast
+          maximum-paths [eibgp|ibgp] <1-32>   !eibgp = affects both EBGP and iBGP
+  
+  > Route Age (learned first)
+  > neighboring Router ID (lower is better)
+  > Cluster List length (minimum is better)
+  > Neighbor Address (lower is better)
+
+https://community.cisco.com/t5/networking-documents/understanding-bgp-best-path-selection-manipulation/ta-p/3150576
+
+Control Traffic
+- Outbound Traffic
+  > Weight
+  > Local Preference
+- Inbound Traffic
+  > AS PATH
+  > MED
+
+
+- How do we change attributes to affect path selection?
+  > IOS route-maps
+  > IOS XR routing policy language (RPL)
+- IOS XR is required for EBGO
+  > even if policy is just to "pass" traffic
+
+Which attributes are generally used?
+- Inbound policy affects outbound path selection
+  > Weight (locally significant)
+  > Local Preference (AS wide value)
+- Outbpund policy affects inbound path selection
+  > AS Path
+  > MED
+  > Communities (RFC 1998)
+
+
+!regular IOS AS Path Prepend
+conf t
+  ip prefix-list TEN PERMIT 10.10.10.10/32
+  exit
+  route-map OUT_POLICY
+    match ip address prefix-list TEN
+      set as-path prepend 1 1 1 1
+    match any   <------------!!!!!!!! prevent denying all traffic. not sure if the configs are correct though
+      permit
+  router bgp 1
+    neighbor 10.3.7.7 route-map OUT_POLICY out
+ end
+ clear bgp ipv4 unicast * out
+
+!IOS XR local preference change inbound
+conf t
+  prefix-set R7_LOOPBACK
+    7.7.7.7/32
+    end
+  route-policy IN_FROM_R7
+    if destination in R7_LOOPBACK then
+      set local-preference 200
+    else
+      pass
+    endif
+    end
+  router bgp 1
+    neighbor 10.7.13.7
+      remote-as 7
+      address-family ipv4 unicast
+      route-policy IN_FROM_R7 in
+      route-policy PASS out
+
+
+Community
+- RFC 1998
+
+
 ===================================================
+VZ SAMPLE
+
+RP/0/RP0/CPU0:GW6.SCL2#show run int TenGigE0/0/0/1
+Fri Dec 25 05:44:52.790 UTC
+interface TenGigE0/0/0/1
+ description u335301:digitalrealty.com:TenGigE
+ bandwidth 10000000
+ service-policy output wred-default
+ ipv4 address 152.179.131.141 255.255.255.252
+ load-interval 30
+!
+router bgp 65489
+ neighbor 152.179.131.142
+  remote-as 6973
+  use neighbor-group full-routes
+  password encrypted 09611E1B3922371C595C557D
+  ttl-security
+  address-family ipv4 unicast
+   route-policy in-cust(6973-u335301) in
+   maximum-prefix 1000 75
+  !
+ !
+prefix-set 6973-u335301
+  170.74.0.0/16 le 32
+end-set
+!
+prefix-set pfx_no-routes
+  # 255.255.255.255/32 Placeholder because IOS-XR doesn't like empty lists
+  255.255.255.255/32
+end-set
+!
+  GlbASN '701',
+  GlbSubASN '65489',
+  GlbCountry '40840',
+  GlbState '6',
+  GlbLo0 '137.39.4.249',
+  GlbV6Lo0 '2600:0809:0000:0000:0000:0000:0000:0021',
+  GlbLo1 '140.222.142.10',
+  GlbV6Lo1 '2001:0506:0000:0000:0000:0000:0000:0137',
+  GlbLo2 '140.222.253.224',
+
+RP/0/RP0/CPU0:GW6.SCL2#show run | begin "neighbor-group full-routes"
+Sun Dec 27 03:55:44.082 UTC
+Building configuration...
+ neighbor-group full-routes
+  description eBGP w/ customers who want full Internet routes
+  address-family ipv4 unicast
+   send-community-ebgp
+   route-policy in-cust(pfx_no-routes) in
+   maximum-prefix 1000 90
+   route-policy out-cust-full(0) out
+  !
+ !
+ neighbor-group default-only
+  description eBGP w/ customers who want 0.0.0.0/0 only
+  address-family ipv4 unicast
+   route-policy in-cust(pfx_no-routes) in
+   maximum-prefix 1000 90
+   route-policy no-routes out
+   default-originate route-policy v4-default
+  !
+ !
+ neighbor-group uunet-global
+  description eBGP w/ customers who want 0.0.0.0/0 + originated by all 70x
+  address-family ipv4 unicast
+   route-policy in-cust(pfx_no-routes) in
+   maximum-prefix 1000 90
+   route-policy out-cust-uu-global(0) out
+  !
+ !
+ 
+RP/0/RP0/CPU0:GW6.SCL2#show rpl route-policy in-cust
+Sun Dec 27 06:22:37.798 UTC
+route-policy in-cust($PfxList)
+  # From customers - also need a prefix-set if they want to send us anything
+  if not destination in $PfxList then
+    drop
+  endif
+  apply Called_drop-AS-hop-limit
+  apply Called_drop-ASPath(private)
+  apply Called_drop-ASPath(subconfed)
+  apply Called_drop-prefix(bad-mojo)
+  apply Called_drop-prefix(uu-internal)
+  apply Called_drop-prefix(ipcomms)
+  apply Called_PEER-LOCK
+  apply Called_blackhole
+  apply Called_DoS-mitigate
+  apply Called_strip-commlist(internal-communities)
+  if as-path in rfc2270-transit then
+    apply Called_tag-prefix(specifics-continent, 112)
+  endif
+  apply Called_LocalPref(80)
+  apply Called_LocalPref(90)
+  apply Called_LocalPref(110)
+  apply Called_LocalPref(120)
+  set next-hop peer-address
+  set community ($GlbCountry:$GlbState, $GlbASN:9970) additive
+  pass
+end-policy
+!
+
+
+RP/0/RP0/CPU0:GW6.SCL2#show rpl route-policy Called_drop-AS-hop-limit
+Sun Dec 27 06:46:38.657 UTC
+route-policy Called_drop-AS-hop-limit
+  if as-path length ge 100 then
+    drop
+  endif
+end-policy
+!
+RP/0/RP0/CPU0:GW6.SCL2#show rpl route-policy Called_drop-ASPath
+Sun Dec 27 06:46:44.162 UTC
+route-policy Called_drop-ASPath($ASPathList)
+  if as-path in $ASPathList then
+    drop
+  endif
+end-policy
+!
+RP/0/RP0/CPU0:GW6.SCL2#show rpl  route-policy Called_LocalPref
+Sun Dec 27 06:47:53.486 UTC
+route-policy Called_LocalPref($LPref)
+  # Set LPref based on right-hand community value
+  if community matches-any (0:$LPref, $GlbASN:$LPref) then
+    set local-preference $LPref
+  endif
+end-policy
+!
+
+
+RP/0/RP0/CPU0:GW6.SCL2#show run formal | inc "neighbor-group full-routes"
+Sun Dec 27 03:56:38.243 UTC
+Building configuration...
+router bgp 65489 neighbor-group full-routes 
+router bgp 65489 neighbor-group full-routes description eBGP w/ customers who want full Internet routes
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast 
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast send-community-ebgp
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast route-policy in-cust(pfx_no-routes) in
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast maximum-prefix 1000 90
+router bgp 65489 neighbor-group full-routes address-family ipv4 unicast route-policy out-cust-full(0) out
+router bgp 65489 neighbor-group full-routes-med 
+router bgp 65489 neighbor-group full-routes-med description eBGP w/ customers who want full Internet routes, w/ MEDs
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast 
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast send-community-ebgp
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast route-policy in-cust(pfx_no-routes) in
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast maximum-prefix 1000 90
+router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast route-policy out-cust-full-meds(0) out
+
+RP/0/RP0/CPU0:GW6.SCL2#show run formal | inc RR
+Sun Dec 27 04:13:52.834 UTC
+Building configuration...
+router bgp 65489 neighbor 140.222.142.19 description RR41.SCL2:65489:up
+router bgp 65489 neighbor 140.222.142.20 description RR42.SAC1:65489:up
+router bgp 65489 neighbor 140.222.142.21 description RR61.SCL2:65489:up
+router bgp 65489 neighbor 140.222.142.22 description RR62.SAC1:65489:up
+router bgp 65489 neighbor 140.222.142.150 description "RR1.SAC1:65489:up"
+router bgp 65489 neighbor 140.222.142.151 description "RR2.SCL2:65489:up"
+RP/0/RP0/CPU0:GW6.SCL2#
+RP/0/RP0/CPU0:GW6.SCL2#show route 8.8.8.8
+Sun Dec 27 04:14:10.683 UTC
+
+Routing entry for 8.8.8.0/24
+  Known via "bgp 65489", distance 200, metric 0
+  Tag 15169, type internal
+  Installed Oct  2 08:51:25.442 for 12w1d
+  Routing Descriptor Blocks
+    140.222.142.170, from 140.222.142.19
+      Route metric is 0
+  No advertising protos.
+
+end vz
