@@ -11,7 +11,7 @@ Enterprise & Campus LAN Switching Fundamentals
 - 2 bytes Length Identification
 - Data/payload 46 to 1500 bytes
 - 4 bytes FCS
-
+ 
 MAC Address Learning Process
 - MAC Address Table is a piece/chunk in memory
 - When host send its FIRST Ethernet frame, the switch will build an entry in the table for that address.
