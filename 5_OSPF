@@ -274,7 +274,6 @@ router ospf 1
   network 155.1.0.0 0.0.255.255 area 0
 end
 
-
 ---------------------------------------------------------------
 gs89e01#show ospf interface brief
 
@@ -288,8 +287,9 @@ Hu0/0/0/0          10    0               10.0.1.93/30       4021  P2P   1/1
 Hu0/7/0/0          10    0               10.0.1.89/30       5     P2P   1/1
 
 
-gs89e01#show run formal | inc HundredGigE0/0/0/0
+gs89e01#show run formal | inc "HundredGigE0/0/0/0|ospf"
 Building configuration...
+taskgroup priv1 task read ospf
 interface HundredGigE0/0/0/0 description **TRK** GS89E01 HundredGigE0/0/0/0 to NV85P02 et-7/0/1.0 BW: 100G CKT: XE#1A#080001 NET: PIP ID: pipdd721 ###
 interface HundredGigE0/0/0/0 
 interface HundredGigE0/0/0/0 mtu 9216
@@ -299,6 +299,20 @@ interface HundredGigE0/0/0/0 ipv4 address 10.0.1.93 255.255.255.252
 interface HundredGigE0/0/0/0 ipv4 unreachables disable
 interface HundredGigE0/0/0/0 carrier-delay up 10000 down 60
 interface HundredGigE0/0/0/0 dampening 1 1000 1500 4
+router ospf 10 nsr
+router ospf 10 log adjacency changes
+router ospf 10 router-id 166.105.224.54
+router ospf 10 mpls ldp sync
+router ospf 10 fast-reroute per-prefix
+router ospf 10 maximum paths 1
+router ospf 10 timers throttle lsa all 50 200 1000
+router ospf 10 timers throttle spf 100 200 1000
+router ospf 10 timers lsa min-arrival 100
+router ospf 10 timers pacing flood 10
+router ospf 10 area 0 
+router ospf 10 area 0 mpls traffic-eng
+router ospf 10 area 0 interface Loopback1 
+router ospf 10 area 0 interface Loopback1 passive enable
 router ospf 10 area 0 interface HundredGigE0/0/0/0 
 router ospf 10 area 0 interface HundredGigE0/0/0/0 bfd minimum-interval 300
 router ospf 10 area 0 interface HundredGigE0/0/0/0 bfd fast-detect
@@ -307,6 +321,16 @@ router ospf 10 area 0 interface HundredGigE0/0/0/0 cost 4021
 router ospf 10 area 0 interface HundredGigE0/0/0/0 authentication message-digest
 router ospf 10 area 0 interface HundredGigE0/0/0/0 message-digest-key 1 md5 encrypted 133607131918242438202C646773
 router ospf 10 area 0 interface HundredGigE0/0/0/0 network point-to-point
+router ospf 10 area 0 interface HundredGigE0/7/0/0 
+router ospf 10 area 0 interface HundredGigE0/7/0/0 bfd minimum-interval 300
+router ospf 10 area 0 interface HundredGigE0/7/0/0 bfd fast-detect
+router ospf 10 area 0 interface HundredGigE0/7/0/0 bfd multiplier 3
+router ospf 10 area 0 interface HundredGigE0/7/0/0 cost 5
+router ospf 10 area 0 interface HundredGigE0/7/0/0 authentication message-digest
+router ospf 10 area 0 interface HundredGigE0/7/0/0 message-digest-key 1 md5 encrypted 06351F205E5A29171613165C5E54
+router ospf 10 area 0 interface HundredGigE0/7/0/0 network point-to-point
+router ospf 10 mpls traffic-eng router-id Loopback1
+router ospf 10 
 rsvp interface HundredGigE0/0/0/0 
 rsvp interface HundredGigE0/0/0/0 bandwidth percentage 40
 mpls traffic-eng interface HundredGigE0/0/0/0 
@@ -318,6 +342,7 @@ multicast-routing address-family ipv4 interface HundredGigE0/0/0/0
 multicast-routing address-family ipv4 interface HundredGigE0/0/0/0 enable
 router igmp interface HundredGigE0/0/0/0 
 router igmp interface HundredGigE0/0/0/0 version 2
+
 ---------------------------------------------------------------
 
 
