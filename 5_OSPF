@@ -1,8 +1,246 @@
 ======================================================================
 Open Shortest Path First (OSPF) Protocol & Operation Overview
 
+Resources:
+- OSPF: Anatomu of an Internet Routing Protocol
+- Routing TCP/IP Volume 1
+- Cisco IP Routing: Packet Forwarding and Intra-domain Routing Protocols
+
+Standards:
+- RFC 2328
+  > OSPF Version 2 
+  > for IPv4
+- RFC 5340
+  > OSPF for both IPv4 and IPv6
+  
+Technology Documentation
+- Cisco > Technology > IP > IP Routing > OSPF
+- OSPF Configuration Guides
+
+What is OSPF?
+- RFC 2328
+  > OSPF Version 2 
+  > for IPv4
+- RFC 5340
+  > OSPF Version 3
+  > OSPF for both IPv4 and IPv6
+  > Multi-AF support for v3
+- Link-State Protocol
+  > Uses Dijkstra SPF Algorithm
+- Classless
+  > Supports VLSM and Summarization
+  
+Why USE OSPF
+- Guarantees a Loop-Free Topology
+  > All routes agree on overall topology
+    - All routers on the same area has the same view of the topology
+  > Uses Dijkstra SPF Algorithm for calculation
+    - Input: LSA Database
+    - Output: Shortest Path Tree; used for routing
+- Standards based
+  > Inter-operability between vendors
+- Large Scalability
+  > Hierarchy through 'areas'
+    - 2 level heirarchy
+  > Topology summarization
+- Fast Convergence
+  > Actively tracks neighbor adjacencies
+    - "hello"
+  > Event driven incremental updates
+  > Subsecond convergence when configured properly
+- Efficient Updating
+  > Uses reliable multicast and unicast updates
+  > Non-OSPF devices do not need to process updates
+- Bandwidth Based Cost Metric
+  > More flexible than static hop count
+- Control Plane Security
+  > Supports multiple forms of authentication
+    - eg. Clear Test, MD5, SHA, IP Sec, etc
+- Extensible
+  > Future application support through "opaque" LSA
+    - eg. MPLS Traffic Engineering
+  > unlike EIGRP which is "closed" standard even though it has an informational standard
+  
+  
+HOW OSPF WORKS
+1. Discover OSPF Neighbors and Exchange Topology
+2. Choose best path via SPF
+  Input: LSA Database
+  Process by SPF Algo
+  Output: Shortest Path Tree
+3. Neighbor and Topology Table Maintenance
+
+Step 1 - Neighbor and Topology Discovery
+- like EIGRP, OSPF uses "hello" packets to discover neighbors on OSPF enabled attached links
+  > Transport via IP protocol 89 (OSPF). Not using TCP/IP transport
+  > Sent as multicast to 224.0.0.5 or 224.0.0.6, or unicast
+- Hello packet contain attributes that neighbors must agree on to form "adjacency"
+  > Once adjacency is negotiated, LSDB is exchanged
+    - Some devices will form neighbor relationships but NOT adjacencies
+    - Devices that form adjacency will form neighbor relationships
+  
+Negotiating OSPF Adjancies
+- OSPF adjacency occurs when connected neighbors use hello packets to agree on unique and commn attributes
+  > Not all OSPF neighbors actually form adjacency
+  > Most OSPF configuration problems happen at this stage
+    - like MTU mismatch, wrong authentication, or Layer 2 errors
+    
+Unique OSPF Adjacency Attributes
+- Router-ID
+  > Node ID in the Link State Graph
+    - BGP is used to do destination routing. OSPF is used to route packets between nodes in the graph
+    - OSPF is making decision based on the node identifier in the graph, which is the Router-ID
+  > Chosen based upon:
+    - Manual Configuration (Recommended)
+    - Highest active Loopback IP
+    - Highest active Interface IP
+  > must be unique on the whole OSPF topology. not just in one area
+- Interface IP Address
+  > For OSPFv2, the interface' primary IP Address
+  > For OSPFv3, the interface' link-local address
+    - This is unique on IPv6 because of Duplicate Address Detection (DAD)
+
+Common OSPF Adjacency Attributes
+- Interface Area ID
+- Hello interval and Dead interval
+- Interface network address
+- Interface MTU
+  > eg. jumbo MTU on GigE
+- Network Type
+- Authentication
+- Stub Flags
+- Other optional capabilities
+
+OSPF Hello Packets
+- OSPF routers periodically send hello packets out to OSPF enabled links everyt Hello interval
+- Hello packet contains
+  > Local Router ID
+  > Local Area ID
+  > Local Interface Subnet Mask
+  > Local Interface Priority
+  > Hello interval
+  > Dead interval
+  > Authentication Type and Password
+  > DR/BDR Addresses
+  > Options (eg. stub flags, etc)
+  > Router IDS of other neighbor on the link
+
+OSPF Adjacency State Machine
+- OSPF adjacency process uses 8 states to determine progress of adjacency establishment
+  1. Down
+    - No hellos have been received from neighbor
+  2. Attempt
+    - UNICAST HELLO packet has been sent to neighbor, but no hello has been received back
+    - Only used for manually configured NBMA neighbors
+    - If OSPF is running on Frame Relay (non-broadcast network type) or DMVPN (non-broadcast network type), state changes from DOWN TO ATTEMPT  
+  2. Init
+    - MULTICAST HELLO
+    - Have received a hello packet from a neighbor, but they have not acknowledged a hello from me
+    - If OSPF is running on Ethernet, state changes from DOWN to INIT
+  3. 2-Way
+    -  I have received a hello packet from a neighbor and they have acknowledged a hello from me
+      > indicated by my Router-ID in the neighbor's hello packet
+    - If state does NOT go to 2-Way state, there must be something wrong in the Layer 2 transport network
+      > OSPF is filtered 1 way
+      > Multicast is not supported
+      > some sort of any Layer 1 issue
+  4. ExStart (Exchange Start)
+    - First Step of actual adjacency
+    - Master and Slave Relationship is formed (Master has higher Router-ID)
+    - Master chooses the starting sequence number for the DBD (Database Descriptor) packets that are used for actual LSA exchange
+    - basically used for collisions (messages sent at the same time)  
+  5. Exchange
+    - Local link state database is sent through DBD packets
+    - DBD sequence number is used for reliable acknowledgement/retransmission
+  6. Loading
+    - Link State Request packets are sent to ask for more information about a PARTICULAR LSA (not the whole Database)
+    - Distance vector is routing based on destination prefixes. Link state is routing based on the nodes in the graph
+  7. Full
+    - Neighbors are fully adjacent and databases are synchronized
+    - SPF can now be run
+
+Step 2 - Choose Best Path via SPF
+- Once the databases are synchronized, path selection begins
+- Each router's LSA include a "cost" attribute for each described link
+  > Best Path to that link is lowest end-to-end cost
+  > Multiple Equal Cost Paths are allowed (ECMP)
+- There exists an issue with OLD OSPF code and NEW OSPF
+  > need to tell OSPF to account for high speed links
+    - eg. GigE, TenGigE, HundredGigE, FortyGigE
+- Cisco's implementation uses Bandwidth based cost, but per RFC, it is arbitrary
+  > Default Cisco Cost = 100 Mbps / Link Bandwidth
+  > Reference BW can be modified to accommodate higher speed links (eg. GigE, TenGigE, HundredGigE, FortyGigE)
+  > As long as peer routers agree on the cost, traffic will be routed
+  
+Step 3 - Neighbor and Topology Maintenance
+- Once adjacencies established and SPT built, OSPF State machine trackets neighbor and topology changes
+  > Hello packets used to track neighbor changes
+  > LSA fields used to track topology changes
+
+Tracking Neighbor Changes
+- Hello Interval
+  > 10 or 30 seconds by default depending on interface type
+- Dead Interval
+  > defaults to 4 x Hello interval
+  > can be as low as 1 second for faster convergence
+- BFD can also be used to for faster convergence
+- When a new LSA is received, it is checked against the database for changes such as:
+  > Sequence number
+    - higher seq number means newer copy of LSA
+    - there are instances when the LSA has higher seq number but nothing has changed
+  > Age
+    - Used  to keep information new and withdraw old information
+    - Periodic flooding occurs after 30 mins
+      > "paranoid" update
+    - LSA that reach MaxAge (60 mins) are withdrawn
+    - MaxAge is used to poison routes (make routes disappear on the update)
+  > Checksum
+    - Used to avoid transmission and memory corruption
+
+LSA Flooding
+- When change is detected, new LSA is generated and flooded out all links
+  > OSPF does not use split horizon
+  > Self-originated LSAs are simply dropped
+- Not all LSA changes require SPF to recalculate
+  > eg. link up/down event vs seq number change
+  > See RFC 2328 "13. The Flooding Procedure" for details
+
+Note: OSPF behaves as a distance vector for Inter-Area Routing
+
 ======================================================================
+
 OSPF Single Area Configuration
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ======================================================================
 Troubleshooting OSPF Adjacencies
