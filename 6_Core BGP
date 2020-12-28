@@ -326,9 +326,9 @@ Community
 
 
 ===================================================
-VZ SAMPLE
+SAMPLE
 
-RP/0/RP0/CPU0:GW6.SCL2#show run int TenGigE0/0/0/1
+GW6.SCL2#show run int TenGigE0/0/0/1
 Fri Dec 25 05:44:52.790 UTC
 interface TenGigE0/0/0/1
  description u335301:digitalrealty.com:TenGigE
@@ -367,7 +367,7 @@ end-set
   GlbV6Lo1 '2001:0506:0000:0000:0000:0000:0000:0137',
   GlbLo2 '140.222.253.224',
 
-RP/0/RP0/CPU0:GW6.SCL2#show run | begin "neighbor-group full-routes"
+GW6.SCL2#show run | begin "neighbor-group full-routes"
 Sun Dec 27 03:55:44.082 UTC
 Building configuration...
  neighbor-group full-routes
@@ -397,7 +397,7 @@ Building configuration...
   !
  !
  
-RP/0/RP0/CPU0:GW6.SCL2#show rpl route-policy in-cust
+GW6.SCL2#show rpl route-policy in-cust
 Sun Dec 27 06:22:37.798 UTC
 route-policy in-cust($PfxList)
   # From customers - also need a prefix-set if they want to send us anything
@@ -428,7 +428,7 @@ end-policy
 !
 
 
-RP/0/RP0/CPU0:GW6.SCL2#show rpl route-policy Called_drop-AS-hop-limit
+GW6.SCL2#show rpl route-policy Called_drop-AS-hop-limit
 Sun Dec 27 06:46:38.657 UTC
 route-policy Called_drop-AS-hop-limit
   if as-path length ge 100 then
@@ -436,7 +436,7 @@ route-policy Called_drop-AS-hop-limit
   endif
 end-policy
 !
-RP/0/RP0/CPU0:GW6.SCL2#show rpl route-policy Called_drop-ASPath
+GW6.SCL2#show rpl route-policy Called_drop-ASPath
 Sun Dec 27 06:46:44.162 UTC
 route-policy Called_drop-ASPath($ASPathList)
   if as-path in $ASPathList then
@@ -444,7 +444,7 @@ route-policy Called_drop-ASPath($ASPathList)
   endif
 end-policy
 !
-RP/0/RP0/CPU0:GW6.SCL2#show rpl  route-policy Called_LocalPref
+GW6.SCL2#show rpl  route-policy Called_LocalPref
 Sun Dec 27 06:47:53.486 UTC
 route-policy Called_LocalPref($LPref)
   # Set LPref based on right-hand community value
@@ -455,7 +455,7 @@ end-policy
 !
 
 
-RP/0/RP0/CPU0:GW6.SCL2#show run formal | inc "neighbor-group full-routes"
+GW6.SCL2#show run formal | inc "neighbor-group full-routes"
 Sun Dec 27 03:56:38.243 UTC
 Building configuration...
 router bgp 65489 neighbor-group full-routes 
@@ -473,7 +473,7 @@ router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast rout
 router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast maximum-prefix 1000 90
 router bgp 65489 neighbor-group full-routes-med address-family ipv4 unicast route-policy out-cust-full-meds(0) out
 
-RP/0/RP0/CPU0:GW6.SCL2#show run formal | inc RR
+GW6.SCL2#show run formal | inc RR
 Sun Dec 27 04:13:52.834 UTC
 Building configuration...
 router bgp 65489 neighbor 140.222.142.19 description RR41.SCL2:65489:up
@@ -482,8 +482,8 @@ router bgp 65489 neighbor 140.222.142.21 description RR61.SCL2:65489:up
 router bgp 65489 neighbor 140.222.142.22 description RR62.SAC1:65489:up
 router bgp 65489 neighbor 140.222.142.150 description "RR1.SAC1:65489:up"
 router bgp 65489 neighbor 140.222.142.151 description "RR2.SCL2:65489:up"
-RP/0/RP0/CPU0:GW6.SCL2#
-RP/0/RP0/CPU0:GW6.SCL2#show route 8.8.8.8
+GW6.SCL2#
+GW6.SCL2#show route 8.8.8.8
 Sun Dec 27 04:14:10.683 UTC
 
 Routing entry for 8.8.8.0/24
@@ -494,5 +494,3 @@ Routing entry for 8.8.8.0/24
     140.222.142.170, from 140.222.142.19
       Route metric is 0
   No advertising protos.
-
-end vz
