@@ -173,7 +173,7 @@ Step 2 - Choose Best Path via SPF
   > As long as peer routers agree on the cost, traffic will be routed
   
 Step 3 - Neighbor and Topology Maintenance
-- Once adjacencies established and SPT built, OSPF State machine trackets neighbor and topology changes
+- Once adjacencies established and SPT built, OSPF State machine tracks neighbor and topology changes
   > Hello packets used to track neighbor changes
   > LSA fields used to track topology changes
 
@@ -282,11 +282,13 @@ end
   > LSA1 Router LSA
     - describes how we route to the node in the graph
     - attribute of the links the Node owns
+    - originated by all routers in the area
   > LSA2 - Network LSA
-    - 
+    - originated by the Designated Router
+    - describe who the other nodes on the particular segment
 
 
-
+24:00 MARK
 
 
 
@@ -397,6 +399,7 @@ Link ID         ADV Router      Age         Seq#       Checksum Link count
 159.24.196.51   159.24.196.51   475         0x8001c729 0x004a2d 5
 159.24.196.52   159.24.196.52   199         0x8001c1c5 0x00038e 5
 159.24.196.53   159.24.196.53   337         0x8001c01e 0x00c8e5 5
+166.105.224.133 166.105.224.133 1869        0x80010afa 0x00cc91 39
 -snipped-
 
 		Net Link States (Area 0) <-----------------------------LSA2 Network LSA
@@ -412,7 +415,261 @@ Link ID         ADV Router      Age         Seq#       Checksum
 10.0.10.201     166.61.0.168    843         0x80000d17 0x00e7d4
 10.0.10.206     166.61.0.235    368         0x8000014c 0x00924f
 10.0.11.33      166.105.241.65  838         0x800002e4 0x007d1b
+-snipped-
 
+gs89e01#show ospf database router 166.105.224.133
+
+
+            OSPF Router with ID (166.105.224.54) (Process ID 10)
+
+		Router Link States (Area 0)
+
+  Routing Bit Set on this LSA
+  LS age: 244
+  Options: (No TOS-capability, DC)
+  LS Type: Router Links
+  Link State ID: 166.105.224.133
+  Advertising Router: 166.105.224.133
+  LS Seq Number: 80010afb
+  Checksum: 0xca92
+  Length: 492
+  AS Boundary Router
+   Number of Links: 39 <------------------- Number of links/interfaces on the router running OSPF
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.59
+     (Link Data) Router Interface address: 10.0.21.138
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 5
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.21.136
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 5
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.104
+     (Link Data) Router Interface address: 10.0.0.238
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4001
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.0.236
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4001
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.229.232
+     (Link Data) Router Interface address: 10.0.4.54
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 65500
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.4.52
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 65500
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.229.237
+     (Link Data) Router Interface address: 10.0.4.58
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4034
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.4.56
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4034
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.108
+     (Link Data) Router Interface address: 10.0.0.250
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4001
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.0.248
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4001
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.229.230
+     (Link Data) Router Interface address: 10.0.24.134
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4014
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.24.132
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4014
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.61
+     (Link Data) Router Interface address: 10.0.10.253
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 8300
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.10.252
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 8300
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.61.0.145
+     (Link Data) Router Interface address: 10.0.12.58
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 625
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.12.56
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 625
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.81
+     (Link Data) Router Interface address: 10.0.3.206
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 1850
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.3.204
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 1850
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.59
+     (Link Data) Router Interface address: 10.0.3.210
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 7
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.3.208
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 7
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.58
+     (Link Data) Router Interface address: 10.0.3.221
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 6900
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.3.220
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 6900
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.95
+     (Link Data) Router Interface address: 10.0.3.230
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 1975
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.3.228
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 1975
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.77
+     (Link Data) Router Interface address: 10.0.3.238
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4100
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.3.236
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4100
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.93
+     (Link Data) Router Interface address: 10.0.3.245
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 550
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.3.244
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 550
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.75
+     (Link Data) Router Interface address: 10.0.3.253
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 825
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.3.252
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 825
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.87
+     (Link Data) Router Interface address: 10.0.4.5
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 6100
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.4.4
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 6100
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.230.42
+     (Link Data) Router Interface address: 10.2.160.50
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4269
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.2.160.48
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4269
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.93
+     (Link Data) Router Interface address: 10.0.21.145
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 550
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.21.144
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 550
+
+    Link connected to: another Router (point-to-point)
+     (Link ID) Neighboring Router ID: 166.105.224.54
+     (Link Data) Router Interface address: 10.0.1.94
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4021
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 10.0.1.92
+     (Link Data) Network Mask: 255.255.255.252
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 4021
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 166.105.224.133
+     (Link Data) Network Mask: 255.255.255.255
+      Number of TOS metrics: 0
+       TOS 0 Metrics: 0
+       
 gs89e01#show run formal | inc "HundredGigE0/0/0/0|ospf"
 Building configuration...
 taskgroup priv1 task read ospf
