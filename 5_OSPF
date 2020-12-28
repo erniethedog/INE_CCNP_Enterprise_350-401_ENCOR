@@ -35,7 +35,7 @@ Why USE OSPF
   > All routes agree on overall topology
     - All routers on the same area has the same view of the topology
   > Uses Dijkstra SPF Algorithm for calculation
-    - Input: LSA Database
+    - Input: LSA Database (in the area)
     - Output: Shortest Path Tree; used for routing
 - Standards based
   > Inter-operability between vendors
@@ -65,7 +65,7 @@ Why USE OSPF
 HOW OSPF WORKS
 1. Discover OSPF Neighbors and Exchange Topology
 2. Choose best path via SPF
-  Input: LSA Database
+  Input: LSA Database (in the area)
   Process by SPF Algo
   Output: Shortest Path Tree
 3. Neighbor and Topology Table Maintenance
@@ -211,12 +211,114 @@ Note: OSPF behaves as a distance vector for Inter-Area Routing
 
 OSPF Single Area Configuration
 
+Configuring Basic OSPF
+Verifying OSPF Adjacencies
+Verifying OSPF Database
 
 
+OSPF Prerequisites
+- IP Routing must be enabled
+  > eg. "ip routing" command
+- Must be an up/up interface running IP
+  > used for OSPF Router-ID when OSPF starts
+  > not an IP address. just a 32 bit number inherited from IP address
+  
+Enabling OSPF
+- Enable global OSPF process
+  > router ospf [process-id]
+    - process-id is locally significant
+    - Exception is MPLS L3VPN
+- Enable interface OSPF process
+  > process level
+    - network [address] [wildcard] area [area-id]
+  > interface level
+    - ip ospf [process-id] area [area-id]
+  > both are esentially enabling the ospf process
+  > like in EIGRP, there is a key distinction between the network statement and what is actually being advertised
+    - example, when you issue a /8 in network statement, it doesnt necessarily mean that you are advertising the /8 prefix
+    - you are advertising the SUBNET MASK of the INTERFACE in which the OSPF is actually configured on
+  
+OSPF Network Statement
+- useful for ENABLING OSPF on multiple interfaces at the same time
+  > wildcard mask does not relate to subnet mask
+- Most specific match determines the area
+  > network 0.0.0.0 255.255.255.255 area 0
+  > network 1.0.0.0 0.255.255.255 area 1
+  > network 1.2.0.0 0.0.255.255 area 2
+  > network 1.2.3.0 0.0.0.255 area 3
+  > network 1.2.3.4 0.0.0.0 area 4
+- better to check the area an interface belongs by using
+  > show ip ospf interface [brief]
 
 
+OSPF Interface Statement
+- Enables OSPF on the primary address and secondary IP addresses at the same time
+  > Secondary advertisement can be disabled
+  > not disbaled by default
+- OSPF stays enabled even if IP address changes
+  
+
+OSPF Verification
+- Verify OSPF is enabled
+  > show ip ospf
+  > show ip ospf interface [brief]
+- Verify OSPF adjacencies
+  > show ip ospf neighbor
+  > debug ip ospf adjacency
+- Verify OSPF database
+  > show ip ospf database [router|network|summary|...]
+
+Configuration
+conf t
+router ospf 1
+  network 155.1.0.0 0.0.255.255 area 0
+end
 
 
+---------------------------------------------------------------
+gs89e01#show ospf interface brief
+
+* Indicates MADJ interface, (P) Indicates fast detect hold down state
+
+Interfaces for OSPF 10
+
+Interface          PID   Area            IP Address/Mask    Cost  State Nbrs F/C
+Lo1                10    0               166.105.224.54/32  1     LOOP  0/0
+Hu0/0/0/0          10    0               10.0.1.93/30       4021  P2P   1/1
+Hu0/7/0/0          10    0               10.0.1.89/30       5     P2P   1/1
+
+
+gs89e01#show run formal | inc HundredGigE0/0/0/0
+Building configuration...
+interface HundredGigE0/0/0/0 description **TRK** GS89E01 HundredGigE0/0/0/0 to NV85P02 et-7/0/1.0 BW: 100G CKT: XE#1A#080001 NET: PIP ID: pipdd721 ###
+interface HundredGigE0/0/0/0 
+interface HundredGigE0/0/0/0 mtu 9216
+interface HundredGigE0/0/0/0 service-policy input PE-P_Mark
+interface HundredGigE0/0/0/0 service-policy output DSCP_PCR_PE-P_100000000K
+interface HundredGigE0/0/0/0 ipv4 address 10.0.1.93 255.255.255.252
+interface HundredGigE0/0/0/0 ipv4 unreachables disable
+interface HundredGigE0/0/0/0 carrier-delay up 10000 down 60
+interface HundredGigE0/0/0/0 dampening 1 1000 1500 4
+router ospf 10 area 0 interface HundredGigE0/0/0/0 
+router ospf 10 area 0 interface HundredGigE0/0/0/0 bfd minimum-interval 300
+router ospf 10 area 0 interface HundredGigE0/0/0/0 bfd fast-detect
+router ospf 10 area 0 interface HundredGigE0/0/0/0 bfd multiplier 3
+router ospf 10 area 0 interface HundredGigE0/0/0/0 cost 4021
+router ospf 10 area 0 interface HundredGigE0/0/0/0 authentication message-digest
+router ospf 10 area 0 interface HundredGigE0/0/0/0 message-digest-key 1 md5 encrypted 133607131918242438202C646773
+router ospf 10 area 0 interface HundredGigE0/0/0/0 network point-to-point
+rsvp interface HundredGigE0/0/0/0 
+rsvp interface HundredGigE0/0/0/0 bandwidth percentage 40
+mpls traffic-eng interface HundredGigE0/0/0/0 
+mpls traffic-eng interface HundredGigE0/0/0/0 admin-weight 651100
+mpls traffic-eng interface HundredGigE0/0/0/0 auto-tunnel backup 
+mpls traffic-eng interface HundredGigE0/0/0/0 auto-tunnel backup exclude srlg preferred
+mpls ldp interface HundredGigE0/0/0/0 
+multicast-routing address-family ipv4 interface HundredGigE0/0/0/0 
+multicast-routing address-family ipv4 interface HundredGigE0/0/0/0 enable
+router igmp interface HundredGigE0/0/0/0 
+router igmp interface HundredGigE0/0/0/0 version 2
+---------------------------------------------------------------
 
 
 
