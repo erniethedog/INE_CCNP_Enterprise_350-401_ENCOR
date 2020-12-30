@@ -276,7 +276,7 @@ router ospf 1
 end
 
 -show ip ospf brief
-  > F/C = Full/2-Way
+  > F/C = Full Adjacencies / Total Neighbors
 
 - show ip ospf database
   > LSA1 Router LSA
@@ -284,30 +284,34 @@ end
     - attribute of the links the Node owns
     - originated by all routers in the area
   > LSA2 - Network LSA
-    - originated by the Designated Router
+    - originated by the Designated Router (there is DR for each broadcast network)
     - describe who the other nodes on the particular segment
 
 
-24:00 MARK
+Designated Router
+Backup BR
+DR Other
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Example:
+- On a segment shared by 5 routers
+  > 1 DR
+		- Adjacent with the other 4
+	> 1 BDR
+		- Adjacent with the other 4
+	> 3 DR Other
+		- DR Other router will be adjacent with BR and BDR only
+		- DR Other router will form neighbor relationship with the rest of the routers
+- OSPF runs as NETWORK TYPE BROADCAST by default on a shared LAN segment (NOT ADVISABLE to run as default on P2P links)
+	> command below to change the default behaviour to P2P
+		conf t
+		int <INT_NAME>
+			ip ospf network point-to-point
+- DR's role is to shorten the Shortest Path Tree calculation
+	> think of this as a switch with a star topology
+	> You dont want to make a calculation 5 times (5 routers on the segment)
+	> Calculation will just be based on the DR's perspective, since the rest of the router on the segment is connected to the DR anyway
+	> This is to lessen work on the CPE. Not really needed on today's network as CPUs are now powerful
+	> This is an issue on the old Routers
 
 
 ======================================================================
