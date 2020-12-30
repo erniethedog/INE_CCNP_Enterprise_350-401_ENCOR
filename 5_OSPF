@@ -328,7 +328,12 @@ Where problem arise?
 
 Useful Commands
 - show ip ospf neighbor
+	> better to also check the database. Adjacency might form between neighbors but no routes will be installed
+		- this happens if the ospf attribute/s are mismatched
 - show ip ospf database
+- show ip ospf database router [ROUTER_ID]
+	> Check for "Adv Router is not-reachable in topology"
+		- means routing bit is NOT SET. Router ID is unreachable
 - debug ip ospf adj
 - debug ip packet
 	> use with caution
@@ -364,8 +369,7 @@ OSPF Adjacency Attributes
 	> Other optional capabilities
 
 
-12:00
-
+18:00
 
 
 
