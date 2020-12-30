@@ -316,6 +316,83 @@ Example:
 
 ======================================================================
 Troubleshooting OSPF Adjacencies
+
+Understanding OSPF State Machine
+Interpreting show commands
+Interpreting debug commands
+
+
+Where problem arise?
+- Transport Problems
+- Attribute negotiation problems
+
+Useful Commands
+- show ip ospf neighbor
+- show ip ospf database
+- debug ip ospf adj
+- debug ip packet
+	> use with caution
+	
+Normal OSPF Adjacency State Machine Order
+- Down/Attempt
+- Init
+- 2-Way
+	> Stop here for DROthers
+	> If you dont get to 2-way, there is a transport problem
+		- DMVPN wrong mapping
+		- VLAN ACL dropping OSPF
+		- Layer 1 issues
+		- etc
+- ExStart
+- Exchange
+- Loading
+- Full
+
+OSPF Adjacency Attributes
+- Unique OSPF Adj Attributes
+	> Router-ID
+	> Interface IP Address
+- Common OSPF Adjacency Attributes
+	> Interface Area-ID
+	> Hello Interval and Dead Interval
+	> Interface network address
+	> Interface MTU
+	> Network Type
+		- defaults to Broadcast
+	> Authentication
+	> Stub Flags
+	> Other optional capabilities
+
+
+12:00
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ======================================================================
 OSPF Areas and LSAs
 ======================================================================
