@@ -386,25 +386,76 @@ Overview
 - Areas add heirarchy and scalability to OSPF
 - An area defines a flooding domain
 	> All devices in the area agree on the topology
-	> Changes inside the area require LSA flooding and full SPF
-	
+	> Changes inside the area require LSA flooding and full SPF algo run
+- Routing between areas hides topology details
+	> Inter-area routing is similar to distance vector
+	> Changes outside the area dont always require LSA flooding or SPF run
+	> Limits impacts on router resources
+
+OSPF Two-Level Heirarchy
+- Backbone Area
+	> Area 0 (0.0.0.0)
+	> Used to summarize topology (NOT TO BE CONFUSED WITH NLRI SUMMARIZATION) information between other areas
+		- LSA type 3. Network summary
+	> Traffic from one area to another must pass through area 0
+	> Must be contiguous
+		- all other areas are connected to area 0
+		- area 0 is in the middle. other areas are outside
+- Non-Backbone Area
+	> All other areas except Area 0. Range is 1 to 2^32 (0.0.0.1 - 255.255.255.255)
+	> Must use connections to area 0 to reach other areas
+
+
+OSPF Router Types
+- Backbone Routers
+	> At least one link in Area 0
+- Internal Routers
+	> All links in one non-backbone area
+- Area Border Router (ABR)
+	> Links in both area 0 and in non-backbone area(s)
+	> Used to summarize information between area 0 and non-backbone area
+- Autonomous System Boundary Router (ASBR)
+	> At least one link in OSPF domain
+	> At least one link outside OSPF domain
+		- EIGRP, IS-IS, BGP, etc.
+	> Used to redistribute information to/from other routing domains and OSPF
+
+
+OSPF LSA Types
+- With different router types in the OSPF domain, different types of advertisements are required
+	> eg. DR, ABR, ASBR, etc
+- Different LSA formats used to represent this information
+	> Format is defined by type code
+	> Type 1, type 2, etc
+- LSA Types are 
+	> Type 1 - Router LSA
+	> Type 2 - Network LSA
+	> Type 3 - Network Summary LSA
+	> Type 4 - ASBR Summary LSA
+	> Type 5 - External LSA
+	> Type 6 - Multicast LSA
+		- MOSPF - not implemented by most vendors (abandoned protocol)
+	> Type 7 - NSSA External LSA
+	> Type 8, 9, 10 - Opaque LSA
+		- Used for extensibility
+		- eg. MPLS Traffic Engineering
+
+
+LSAs and Route Types
+- LSAs are grouped together by 3 route types
+- Intra-Area Routes (O)
+	> LSA Types 1 and 2
+- Inter-Area Routes (O IA)
+	> LSA Types 3 and 4
+- External Routes
+	> E1/E2
+		- LSA Type 5
+	> N1/N2
+		- LSA Type 7
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+09:00
 
 
 
