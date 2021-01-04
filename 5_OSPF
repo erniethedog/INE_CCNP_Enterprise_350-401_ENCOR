@@ -375,12 +375,19 @@ OSPF Adjacency Attributes
 OSPF Areas and LSAs
 
 
+- Scaling OSPF with Areas
+- OSPF LSA Types
+- OSPF Path Selection
+	> Intra-Area
+	> Inter-Area
+	> External
 
-
-
-
-
-
+Overview
+- Areas add heirarchy and scalability to OSPF
+- An area defines a flooding domain
+	> All devices in the area agree on the topology
+	> Changes inside the area require LSA flooding and full SPF
+	
 
 
 
