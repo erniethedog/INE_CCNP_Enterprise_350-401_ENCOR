@@ -136,7 +136,8 @@ OSPF Adjacency State Machine
   2. Init
     - MULTICAST HELLO
     - Have received a hello packet from a neighbor, but they have not acknowledged a hello from me
-    - If OSPF is running on Ethernet, state changes from DOWN to INIT
+    - If OSPF is running on Ethernet, state changes from DOWN to INIT (not just Ethernet, any other network types which is non broadcast goes to INIT after DOWN)
+		- Stuck here = transport problem. check protocol filtering on ACL as well
   3. 2-Way
     -  I have received a hello packet from a neighbor and they have acknowledged a hello from me
       > indicated by my Router-ID in the neighbor's hello packet
@@ -145,7 +146,8 @@ OSPF Adjacency State Machine
       > Multicast is not supported
       > some sort of any Layer 1 issue
   4. ExStart (Exchange Start)
-    - First Step of actual adjacency
+    - First Step of actual adjacency. Negotiate attributes for adjacency
+    - If stuck at this state, debug will show the issue. OR do a stare and compare on the attributes
     - Master and Slave Relationship is formed (Master has higher Router-ID)
     - Master chooses the starting sequence number for the DBD (Database Descriptor) packets that are used for actual LSA exchange
     - basically used for collisions (messages sent at the same time)  
@@ -362,43 +364,55 @@ OSPF Adjacency Attributes
 	> Hello Interval and Dead Interval
 	> Interface network address
 	> Interface MTU
+		- best practice is NOT TO IGNORE MTU checks
 	> Network Type
 		- defaults to Broadcast
 	> Authentication
 	> Stub Flags
 	> Other optional capabilities
 
-
-18:00
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ======================================================================
 OSPF Areas and LSAs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ======================================================================
 OSPF Media Dependencies & Network Types
 ======================================================================
