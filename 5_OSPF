@@ -610,40 +610,98 @@ HOW DROTHERS WORK
 
 
 DR/BDR ELECTION
+- Election is done once routers are in 2-way state
+- Election based on interface priority and Router-ID
+	> Priority
+    - 0-255
+    - Higher is better
+    - 0 = never
+  > Router-ID
+    - Highest loopback / interface IP
+    - can be statically set
+    - higher is better
+- Uses WAIT timer to stop pre-emption of current DR/BDR
+  > Unlink IS-IS's Designated Intermediate System (DIS)
+  > DIS = DR in OSPF
+- Election is done on 224.0.0.5 (All SPF Routers)
+- by default, the router who comes up on the segment first elects itself as the BDR
+  > even though priority is lower compared to other routers
+  > problem is when that router is a spoke on a hub and spoke topology. it wont have reachability to other routers on L2 perspective
+    - this router will promote itself as the DR
+  > when another router comes up (with higher priority), it will skip WAIT timer and elect itself as the BDR and ack the first router as the DR
+  
 
+OSPF Network Point-to-Point
+- Default on p2p media
+  > HDLC, PPP, GRE
+- Sends hellos as multicast
+  > 224.0.0.5
+- No BR/BDR Election
+- Supports only TWO neighbors on the link
 
+OSPF Point-to-Multipoint
+- Treats network as a collection of P2P links
+- Sends hellos as multicast
+  > 224.0.0.5
+- No BR/BDR Election
+- Special next-hop processing
+- Usually the best design option for partial mesh NMBA networks
+  > DMVPN, Frame Relay Partial Mesh
+  
+  
+OSPF Point-to-Multipoint Non-Broadcast
+- Same as Point-to-Multipoint, but send hellos as unicast
+  > Manually defined addresses with neighbor command
+  > Allows for per-VC OSPF cost over NBMA
+- No BR/BDR Election
+- Special next-hop processing
 
-11:20
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+OSPF Network Loopback
+- Special case for Loopback and Looped-back interfaces (hardware)
+- Advertises link as /32 stub host route
+- ip ospf network point-to-point used to disable this behavior
 
 ======================================================================
 Configuring OSPF Network Types
+
+- Elect BDR first. If no DR is detected based from hellos, the BDR will promote itself as the DR.
+- If there are 2 or more BDRs, highest router priority is declared to be BDR
+- In case of a tie, the one having the highest Router ID is chosen
+- See RFC 2328
+
+
+
+28:45
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ======================================================================
 OSPF Virtual Links
 ======================================================================
