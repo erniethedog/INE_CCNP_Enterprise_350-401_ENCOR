@@ -329,6 +329,19 @@ BFD is usually offloaded on the Hardware/ASICs, so, detection is really fast and
 - show bfd neighbor [detail]
   > you can see the registered protocol for the BFD
   > BFD basically tells upper layer protocols that link is dead
+ 
+ 
+interface GigabitEthernet1/0.37
+ bfd interval 250 min_rx 250 multiplier 3
+router eigrp NAME
+ !
+ address-family ipv4 unicast autonomous-system 100
+  !       
+  af-interface GigabitEthernet1/0.37
+   bfd
+  exit-af-interface
+
+
 
 Modifying EIGRP Path Selection
 EIGRP Unequal Cost Load Balancing
