@@ -437,6 +437,47 @@ Automatic KEY Rotation
 EIGRP AUTOMATIC KEY ROTATION
 
 
+conf t
+key chain EIGRP
+key 1
+key-string ONE
+send-lifetime 00:00:00 Jan 1 2000 00:07:00 Jan 1 2000
+accept-lifetime 00:00:00 Jan 1 2000 00:07:30 Jan 1 2000
+key 2
+key-string TWO
+send-lifetime 00:07:00 Jan 1 2000 00:10:00 Jan 1 2000
+accept-lifetime 00:06:30 Jan 1 2000 00:10:00 Jan 1 2000
+key 3
+key-string THREE
+send-lifetime 00:10:00 Jan 1 2000 infinite
+accept-lifetime 00:09:30 Jan 1 2000 infinite
+
+
+
+int gig1.23
+ip authentication key-chain eigrp 200 EIGRP
+ip authentication mode eigrp 200 md5
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ======================================================================
 EIGRP NAMED MODE AUTHENTICATION
 
