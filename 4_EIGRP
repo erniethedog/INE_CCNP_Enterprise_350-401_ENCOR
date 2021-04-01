@@ -375,6 +375,63 @@ EIGRP Traffic Engineering
 ======================================================================
 EIGRP CLASSIC AUTHENTICATION
 
+- Support two types of Authentication
+	> MD5
+	> HMAC-SHA-256
+	
+- MD5 Authentication
+	> Both Classic and Named EIGRP
+	> Uses key chains
+	> Supports automatic key rotation
+	
+- SHA Authentication
+	> Only on NAMED EIGRP
+	> No key chains or rotations
+	
+	
+Classic EIGRP Authentication
+- Supports MD5 only
+	> HASH of the password is exchanged
+	> on packet capture, you can still see the routes in plain text format
+- Define key chain globally
+	> Whitespace counts as a characte
+	> Key number must match. EIGRP starts on lowest number, going up
+	> supports automatic key rotation
+- Applied at interface level
+	> ip authentication mode eigrp [AS] md5
+	> ip authentication key-chain eigrp [AS] [key-chain]
+	
+	
+conf t
+key chain <NAME>
+	key 1
+		key-string password <PASSWORD>			!!!!take note that whitespace is a character
+
+interface gi1.146
+	ip authentication mode eigrp <AS> md5
+	ip authentication key-chain eigrp 1 <KEY_CHAIN>
+	
+show key chain
+
+On logs:
+missing authentication - peer has no authentication configured
+invalid authentication - peer has wrong key OR key number 
+	
+	
+Automatic KEY Rotation
+- Key Chain suppors multiple key numbers
+	> Router always send lowest valid key
+	
+- Key number's validity is based on time
+	> accept-lifetime
+		- when key is valid to be received
+	> send-lifetime
+		- when key is valid to be snet
+
+- Automatic rotaton by defining different validity times
+	> implies time must be agreed upon. NTP
+	> accept-lifetime should overlap in case of mismatch of time 
+	
 
 ======================================================================
 EIGRP AUTOMATIC KEY ROTATION
