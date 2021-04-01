@@ -378,6 +378,8 @@ EIGRP CLASSIC AUTHENTICATION
 - Support two types of Authentication
 	> MD5
 	> HMAC-SHA-256
+	> on packet capture, you can still see the routes in plain text format
+		- authentication is DIFFERENT from encryption
 	
 - MD5 Authentication
 	> Both Classic and Named EIGRP
@@ -392,7 +394,6 @@ EIGRP CLASSIC AUTHENTICATION
 Classic EIGRP Authentication
 - Supports MD5 only
 	> HASH of the password is exchanged
-	> on packet capture, you can still see the routes in plain text format
 - Define key chain globally
 	> Whitespace counts as a characte
 	> Key number must match. EIGRP starts on lowest number, going up
@@ -459,27 +460,46 @@ ip authentication key-chain eigrp 200 EIGRP
 ip authentication mode eigrp 200 md5
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ======================================================================
 EIGRP NAMED MODE AUTHENTICATION
+
+- Supports MD5 and SHA
+	> MD5 uses same global key chains as Classic
+	> SHA uses static key
+- Defined under af-interface
+	> Can use af-interface default
+	> Specific interface overrides default
+	
+
+
+conf t
+key chain EIGRP
+	key 1
+		key-string password MyPassword	
+		
+		
+conf t
+router eigrp NAME1
+address-family ipv6 autonomous-system 200
+af-interface gi0/0
+authentication mode hmac-sha-256 0 PASSWORD1
+end
+
+
+! enable on all interfaces by DEFAULT
+conf t
+router eigrp NAME1
+	address-family ipv6 autonomous-system 200
+		af-interface default
+			authentication mode md5
+			authentication key-chain EIGRP
+		exit-af-interface
+
+
+! to encrypt password. show key-chain shows clear text result, anyway. 
+! so a type 7 password can be seen in plain text using the key-chain. simple trick hehe
+conf t 
+service password-encryption
 
 
 ======================================================================
