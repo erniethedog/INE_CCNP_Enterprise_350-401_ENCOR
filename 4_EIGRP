@@ -591,6 +591,20 @@ ip summary-address eigrp 300 150.1.0.0/20
 - Verify also with "show ip cef"
 
 
+
+NAMED MODE
+conf t
+router eigrp XYZ
+	address-family ipv4 unicast autonomos-system 300
+		af-interface Tunnel0
+			summary-address 0.0.0.0/0  !!!!!!!!<-----------------
+		exit-ad-interface
+		!
+		topology-base
+			summary-metric 0.0.0.0/0 1 1 1 1 1  !!!!!!!!<-----------------
+
+
+
 ======================================================================
 EIGRP TRAFFIC ENGINEERING WITH SUMMARIZATION
 
