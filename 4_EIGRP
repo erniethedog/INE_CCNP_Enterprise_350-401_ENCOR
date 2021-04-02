@@ -505,6 +505,91 @@ service password-encryption
 ======================================================================
 EIGRP SUMMARIZATION
 
+- Query Scoping
+- Summarization
+
+
+Scalability
+- sub-second convergence with Feasible Successor
+	> Pre-calculated backup routes which pass Feasibility Condition
+- What if I can't engineer Feasible Successors?
+	> If no backup routes, QUERY message is sent
+	> Convergence is now a function of QUERY domain size
+	
+QUERY domain is like OSPF flooding domain
+	- NEEDS to be minimized
+	
+Query Domain can be bounded/reduced by:
+- Summarization
+- Stub Router advertisement
+	
+
+EIGRP QUERY SCOPING
+- Query is generated when a route becomes ACTIVE
+	> eg. link loss, neighbor loss, metric change
+- QUERY is sent for EXACT match of lost route
+	> eg. Do you have a route to 1.2.3.4/24
+- REPLY is immediately sent if no match
+	> eg. 1.2.3.0/24 does match my 1.0.0.0/8
+	> this is how summaries limit the query domain
+
+
+EIGRP Summarization
+- supports 2 types
+	> Auto-Summary (Off by default on IOS 15 and above)
+	> Manual Summary
+
+
+EIGRP heirarchy is ARBITRARY
+- Summaries can be enforced anywhere
+- Big design advantage over OSPF and IS-IS
+	
+	
+EIGRP Auto-Summary
+- still supports legacy auto- summary
+	> advertisements between major network bouncaries are summarized to classful boundary
+	- VLSM is supported within the same major network
+- Auto-Summary is disabled in newer IOS
+	> can be enabled with "auto-summary"
+	> process level in classic EIGRP
+	> base topology in Named EIGRP
+- NO PRACTICAL REASON TO DO THIS AS MANUAL SUMMARIZATION IS AVAILABLE
+
+
+EIGRP Manual Summarization
+- Manual Summarization
+	> Supports any bit boundary including 0.0.0.0/0
+	> Automatically suppresses subnet advertisements
+	> Can advertise subnets through leak-map argument
+- Classic EIGRP Config
+	> "ip summary-address eigrp" at the link level
+- Named EIGRP config
+	> "summary-address" at af-interface
+
+
+EIGRP Summary Metrics
+- EIGRP summary route inherits metrics from its subnets
+	> Subnet with best metric is used
+- Churning subnest means churning summary
+	> change of best subnet metric means summary must be re-advertised
+- "summary-metric" can mitigate this
+	> metric is statically defined per-summary in "topology base"
+	> only in NAMED EIGRP
+
+
+Example:
+150.1.1.0  to 150.1.10.0
+summary: 150.1.0.0/20
+
+
+Classic Mode (on Router 9):
+conf t
+int gig1.79
+ip summary-address eigrp 300 150.1.0.0/20
+
+- Router will do a NSF or graceful restart
+- Verify also with "show ip cef"
+
 
 ======================================================================
 EIGRP TRAFFIC ENGINEERING WITH SUMMARIZATION
