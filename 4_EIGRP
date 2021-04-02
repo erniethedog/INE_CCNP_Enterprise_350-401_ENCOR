@@ -609,6 +609,101 @@ router eigrp XYZ
 EIGRP TRAFFIC ENGINEERING WITH SUMMARIZATION
 
 
+Traffic Engineering with Summarization
+- EIGRP automatically suppresses subnet advertisements of summaries
+- Since EIGRP is arbitrary, selective summaries can be used for traffic engineering
+	> Longest match route is always preferred
+	> Implies router performing the summary is less-preferred
+
+EIGRP Leak Maps
+- Allows selective advertisement of subnet/s in a summary
+- Can be used for longest match traffic engineering
+- applied through a "route-map"
+	> eg. match ip addess prefix-list ...
+	> similar to unsuppress map in BGP
+
+--------------------
+
+Example on R5:
+conf t
+router eigrp XYZ
+	address-family ipv4 unicast autonomous-system 300
+		af-interface gig1.45
+			summary-address 150.1.10.10/31
+
+! On R4, /32 is now reachable via the tunnel, and /31 is reachable via p2p link
+
+--------------------
+
+Example R10:
+- route to R6 lo0 goes to R10 > 8 > 5 > 4 > 6
+- we want it to route to R10 > 8 > 5 > 4 > 1 > 3 > 6
+
+Classic R6:
+conf t
+int gi1.146
+summary-address eigrp
+
+router eigrp 300
+ip summary-address eigrp 300 150.1.6.6/31
+! this accomplishes objective
+
+
+- if we want to advertise a default route from R5 on both directions
+
+R5
+conf t
+router eigrp XYZ
+address-family ipv4 unicast autonomous-system 300
+	af-interface gig1.45
+		summary 0.0.0.0/0
+	af-interface tunnel0
+		summary 0.0.0.0/0
+
+- R4 is now learning a default route from R5 on p2p link and DMVPN tunnel
+- show ip route 150.1.10.10 will not show anything
+- show ip cef 150.1.10.10 will show the default route
+
+
+- On R5
+conf t
+ip prefix-list LEAKED_PREFIX permit 150.1.10.10/32
+
+route-map LEAK_MAP permit 10
+	match ip address prefix-list LEAKED_PREFIX
+	! Be careful as you can place ACL and prefix-list on a route-map. Both cant coexist in one route-map
+	! For ACL, command will be: "match ip address ACL_NAME"
+	! PrefixList will have a "prefix-list" keyword
+	
+router eigrp XYZ
+address-family ipv4 unicast autonomous-system 300
+	af-interface Tunnel0 		!------------------------WE WANT TO ROUTE the LEAK MAP TO THIS INTERFACE
+		summary 0.0.0.0 0.0.0.0 leak-map LEAK_MAP
+		
+- Now, on R4,
+show ip route 150.1.10.10 - will still not show the exact match
+show ip cef 150.1.10.10 - will show the longer match (leaked) instead of the default route
+
+
+LEAK MAP
+ON CLASSIC MODE
+eg
+
+conf t 
+int gig1.146
+ip summary-address eigrp 300 0.0.0.0/0 leak-map LEAK_MAP_NAME
+
+
+- NOTE: EIGRP doesnt have a DEFAULT INFORMATION ORIGINATE
+
+
+FLOATING SUMMARY
+conf t
+ip route 150.1.6.6 255.255.255.254 null0 10
+	! 10 is the distance. traffic will go to null0 if gig1.67 is down
+ip route 150.1.6.6 255.255.255.254 gig1.67 5
+	! 5 distance
+
 ======================================================================
 EIGRP OVER DMVPN
 
