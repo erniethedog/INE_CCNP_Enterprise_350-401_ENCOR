@@ -707,6 +707,50 @@ ip route 150.1.6.6 255.255.255.254 gig1.67 5
 ======================================================================
 EIGRP OVER DMVPN
 
+- Split Horizon
+- Next Hop Processing
+
+
+EIGRP SPLIT-HORIZON
+- EIGRP is DISTANCE VECTOR
+	> Still relies on split horizon 
+		- Dont advertise routes out the interface your received them on
+- Why would you NOT want Split Horizon
+	> Partial Mesh NBMA
+		- eg. DMVPN
+		
+Example:
+Disable split horizon on R5 tunnel0
+
+conf t
+router eigrp XYZ
+	address-family ipv4 unicast autonomous-system 300
+		af-interface tunnel0
+			no split-horizon
+
+
+13:00
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ======================================================================
 EIGRP STUB ROUTING
