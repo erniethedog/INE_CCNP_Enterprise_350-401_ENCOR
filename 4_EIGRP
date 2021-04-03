@@ -718,7 +718,9 @@ EIGRP SPLIT-HORIZON
 - Why would you NOT want Split Horizon
 	> Partial Mesh NBMA
 		- eg. DMVPN
-		
+
+----------------------------
+
 Example:
 Disable split horizon on R5 tunnel0
 
@@ -727,31 +729,28 @@ router eigrp XYZ
 	address-family ipv4 unicast autonomous-system 300
 		af-interface tunnel0
 			no split-horizon
+			no next-hop-self 				!dynamic spoke to spoke routing
+			
 
+- Note that DMVPN is a way to map a GRE tunnel to an unknown destination
+- On DMVPN
+	> next hop server = hub
+	> Next Hop Resolution Protocol is similar to ARP or Inverse ARP
+- Tunneling a multicast packet in a unicast circuit
 
-13:00
+----------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+EIGRP Next Hop Processing
+- EIGRP updates includes "Next Hop Forwarding Address"
+	> eg. next-hop for the route
+- If zero, use IP address from the received IP header
+	> eg. next-hop is who you learned the route from
+- Why would you NOT want this?
+	> third party next-hop
+	> DMVPN phase 2
+		- Advertise route from the DMVPN spoke to the hub. Hub reflect the route back down to other spokes
+		- If you do not modify the next hop, you can do a spoke to spoke routing/traffic dynamically
+		
 ======================================================================
 EIGRP STUB ROUTING
 
