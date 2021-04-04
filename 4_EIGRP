@@ -855,7 +855,12 @@ router eigrp XYZ
 	> check on R5 "show ip eigrp neighbor detail"
 - Technically, R3 will advertise leak map towards tunnel interface and towards inside network
 	> advertisement towards inside network is stopped by split horizon
-
+	
+- If you do not advertise the default route on R3, no summarization. only command is R3 is a stub, but leak-map is enabled
+	> R5 will have a route to R6 (and R7, R9)
+	> R6 wont have a route to R5
+	> this will create a traffic blackhole
+	
 ======================================================================
 
 EIGRP ROUTE FILTERING
