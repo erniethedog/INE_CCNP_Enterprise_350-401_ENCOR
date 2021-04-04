@@ -848,28 +848,54 @@ router eigrp XYZ
 	address-family ipv4 unicast autonomous-system 400
 		eigrp stub connected summary leak-map LEAK_MAP
 
+
 - On R5, we can now see the specific subnets from R6, R7, and R9
 - Full reachability achieved
 - However, we are still supressing QUERIES to R3
-			
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	> check on R5 "show ip eigrp neighbor detail"
+- Technically, R3 will advertise leak map towards tunnel interface and towards inside network
+	> advertisement towards inside network is stopped by split horizon
 
 ======================================================================
+
 EIGRP ROUTE FILTERING
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ======================================================================
