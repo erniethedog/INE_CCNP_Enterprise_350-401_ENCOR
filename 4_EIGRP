@@ -32,6 +32,7 @@ Enabling Classic EIGRP
                         
   > similar to OSPF network statement
 
+
 Verifying EIGRP
 - Verify EIGRP
   > show ip eigrp interfaces [detail]
