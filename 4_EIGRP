@@ -798,7 +798,7 @@ conf t
 
 -----------------------------------------
 
-What if there are EIGRP router behind a stub router
+What if there are EIGRP router/s behind a stub router
 
 Example:
 R2 and R3 direct link removed
@@ -807,17 +807,51 @@ R1 and R3 direct link removed
 
 R3 has R6, R7, and R9 behind it
 
+On R3
+conf t
+	router eigrp XYZ
+		address-family ipv4 unicast autonomous-system 400
+			eigrp stub
 
+- Now, pings from R10 to R6, R7, and R9 loopbacks are failing
+- To resolve this, on R3, we can send a default route for it's "inside" network
 
+On R3,
+conf t
+	router eigrp XYZ
+		address-family ipv4 unicast autonomous-system 400
+			af-interface gig1.37
+				summary-address 0.0.0.0/0
+				
+- No reachability yet (to every router yet) as R3 is still filtering towards R5, and towards its inside network
+	> pings will still fail. but a default route will now be advertised towards R5
+	> default route is advertised towards its inside network. 
+		- ie. R6, R7, R9 will route towards R3 (default route)
 
+- We can use a leak-map on R3 to allow specific subnets of the summary address that we want to continue to advertise
 
+On R3
+conf t
 
+ip prefix-list LEAK permit 150.1.6.6/32
+ip prefix-list LEAK permit 150.1.7.7/32
+ip prefix-list LEAK permit 150.1.9.9/32
+ip prefix-list LEAK permit 155.1.7.0/24
+ip prefix-list LEAK permit 155.1.9.0/24
+ip prefix-list LEAK permit 155.1.67.0/24
+ip prefix-list LEAK permit 155.1.79.0/24
 
+route-map LEAK_MAP
+	match ip address prefix-list LEAK
+	
+router eigrp XYZ
+	address-family ipv4 unicast autonomous-system 400
+		eigrp stub connected summary leak-map LEAK_MAP
 
-
-
-
-
+- On R5, we can now see the specific subnets from R6, R7, and R9
+- Full reachability achieved
+- However, we are still supressing QUERIES to R3
+			
 
 
 
