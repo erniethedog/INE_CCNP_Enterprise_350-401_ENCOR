@@ -928,9 +928,14 @@ router eigrp A
 		topology base
 			redisribute rip metric 100000 10 255 1 1500 
 
-13:30
+- On R10
+	show ip eigrp topology for 1501.2.2/32
+	> Tag is 0
+	> External protocol is RIP 
 
-
+	show ip eigrp topology 150.1.9.9/32
+	> external protocol is ospf
+	> OSPF process 1 (AS number of route is 1)
 
 
 
