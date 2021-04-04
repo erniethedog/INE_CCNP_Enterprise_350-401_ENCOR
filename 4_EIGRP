@@ -938,37 +938,47 @@ router eigrp A
 	> OSPF process 1 (AS number of route is 1)
 
 
+- Route filter on R10
+
+conf t
+route-map EIGRP permit 10
+	match source-protocol rip
+		set tag 1000
+		set metric 1000 				!!! you can add or subtract metric. in this example, metric is set to 1000
+route-map EIGRP permit 9999		
+
+router eigrp A
+	address-family ipv4 as 1
+		topology base
+			distribute-list route-map EIGRP inbound
+			! we can also apply this on interface level. in this example, distribute list is applied on the process globally
 
 
+- show ip route EIGRP, shows same number of routes
+	> attributes on the RIP routes have changed
+	> show ip eigrp topology 150.1.2.2/32
+		- tag is now 1000
+		- not sure what metric does (PERSONAL NOTE)
+		
+		
+route-map EIGRP deny 20		
+	match source-protocol ospf 1		!!! denies all ospf routes
+	
+clear ip eigrp neighbors
 
+- show ip route eigrp
+	> OSPF routes will now be removed
 
+-----------------------------------------------------------
 
+Example:
 
+router eigrp A
+	address-family ipv4 unicast autonomous-system 1
+		neighbor maximum-prefix MAX_PREFIX [dampened|reset-time|restart|restart-count|warning-only]
 
+		neighbor maximum-prefix 10 restart 1
+		! max prefix = 10
+		! restart interval in 1 minute
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-======================================================================
+=====================================================================
