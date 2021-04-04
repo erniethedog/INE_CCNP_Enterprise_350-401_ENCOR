@@ -756,11 +756,56 @@ EIGRP STUB ROUTING
 
 
 EIGRP Scalability
+- Sub-second convergence with Feasible Successors
+	> Pre-calculated backup routes which pass Feasbility Condition
+- What if I cant engineer Feasible Successors
+	> If no backup routes, QUERY message is sent
+	> Convergence is now a function of QUERY domain size
+- QUERY domain can be bounded by
+	> summarization
+	> stub router advertisement
 
+EIGRP Stub Router Advertisement
+- Stub routers dont receive QUERY messages
+- Stub routers arent used for transit
+	> normally
+- Good design option for DMVPN spokes
 
+-------------------------------------
+Example:
+R2 and R3 direct link is removed
 
+R5:
+conf t
+	router eigrp XYZ
+		address-family ipv4 unicast autonomous-system 400
+			af-interface tunnel0
+				no split-horizon
+				!R5 will now reflect routes back to tunnel0 to the spokes
+				
+				
+R2:
+conf t
+	router eigrp XYZ
+		address-family ipv4 unicast autonomous-system 400
+			eigrp stub
+			! adjacency will flap
+			
+- Config on R2 will show "eigrp stub connected summary"
+- Means R2 will advertise connected routes and generate summary routes
+- on R5, "show ip eigrp neighbor detail" 
+	> R2 is now listed as stub route
 
+-----------------------------------------
 
+What if there are EIGRP router behind a stub router
+
+Example:
+R2 and R3 direct link removed
+R6 link to .146 removed
+R1 and R3 direct link removed
+
+R3 has R6, R7, and R9 behind it
 
 
 
