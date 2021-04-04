@@ -866,6 +866,69 @@ router eigrp XYZ
 EIGRP ROUTE FILTERING
 
 
+EIGRP Filtering Overview
+- Like RIP, EIGRP is a DISTANCE VECTOR IGP
+	> Routers only know what directly connected neighbors tell them
+	> Routers do not need to agree on the topology details like Link State
+	> Implies that filtering can be applied anywhere
+	
+EIGRP Route Filtering Methods
+- EiGRP filtering methods similar to RIPv2 include:
+	> Distribute-lists
+	> Offset-lists
+	> Administrative Distance
+	> Passive Interface
+- EIGRP Specific Filtering methods include:
+	> Distribute-List with Route-Maps
+	> Route Tag Enhancements
+	> Per Neighbor Prefix Limits
+	
+--------------------------------------------
+Example
+- Configure EIGRP on all routers except R2 and R9
+- OSPF running between R7 and R9
+- RIP running between R2 and R3
+
+- R7 is doing redistribution between OSPF and EIGRP
+- R3 is doing redistribution between RIP and EIGRP
+
+R9
+router ospf 1
+	network 0.0.0.0 255.255.255.255 area 0
+	
+R7 
+conf t
+int gig1.79			! this is the interface running eigrp
+	ip ospf 1 area 0
+router ospf 1
+	redistribute eigrp 1 subnet
+router eigrp A
+	address-family ipv4 as 1
+		topology base
+			redistribute ospf 1 metric 100000 10 255 1 1500
+
+R2
+conf t
+router rip
+	version 2
+	no auto-summary
+	network 155.1.0.0
+	network 150.1.0.0
+
+R3
+conf t
+router rip
+	version 2
+	no auto-summary
+	network 155.1.0.0
+	network 150.1.0.0
+	residtribute eigrp 1 metric 1
+router eigrp A
+	address-family ipv4 as 1
+		topology base
+			redisribute rip metric 100000 10 255 1 1500 
+
+13:30
 
 
 
