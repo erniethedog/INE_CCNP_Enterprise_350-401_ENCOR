@@ -229,7 +229,7 @@ Enabling OSPF
 - Enable global OSPF process
   > router ospf [process-id]
     - process-id is locally significant
-    - Exception is MPLS L3VPN
+    	> Exception is MPLS L3VPN
 - Enable interface OSPF process
   > process level
     - network [address] [wildcard] area [area-id]
@@ -269,6 +269,36 @@ OSPF Verification
   > debug ip ospf adjacency
 - Verify OSPF database
   > show ip ospf database [router|network|summary|...]
+	
+
+-show ip ospf int brief
+  > F/C = Full Adjacencies / Total Neighbors = Full State / 2-WAY State
+
+- show ip ospf neighbor
+R8#show ip ospf neighbor 
+
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+150.1.10.10       1   FULL/DR         00:00:32    155.1.108.10    GigabitEthernet1/0.108
+
+- 150.1.10.10 = Router ID of the node in LSDB. Note that RID is not a routable address. It is just inherited from the loopback, in this case
+
+- show ip route ospf
+R8#show ip route ospf
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area 
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       o - ODR, P - periodic downloaded static route, H - NHRP, l - LISP
+       + - replicated route, % - next hop override
+
+Gateway of last resort is not set
+
+      155.1.0.0/16 is variably subnetted, 7 subnets, 2 masks
+O        155.1.10.0/24 
+           [110/2] via 155.1.108.10, 00:05:48, GigabitEthernet1/0.108
+
 
 Configuration
 conf t
@@ -277,17 +307,73 @@ router ospf 1
   auto-cost reference-bandwidth 100000 <----------------change reference BW to 100G, default is 100M
 end
 
--show ip ospf brief
-  > F/C = Full Adjacencies / Total Neighbors
 
 - show ip ospf database
   > LSA1 Router LSA
     - describes how we route to the node in the graph
-    - attribute of the links the Node owns
+    - attribute of the links that Node owns
     - originated by all routers in the area
   > LSA2 - Network LSA
     - originated by the Designated Router (there is DR for each broadcast network)
     - describe who the other nodes on the particular segment
+
+R8#show ip ospf database 
+
+            OSPF Router with ID (150.1.8.8) (Process ID 1)
+
+                Router Link States (Area 0)
+
+Link ID         ADV Router      Age         Seq#       Checksum Link count
+150.1.8.8       150.1.8.8       511         0x80000002 0x00CE99 4
+150.1.10.10     150.1.10.10     515         0x80000002 0x00D725 2
+
+                Net Link States (Area 0)
+
+Link ID         ADV Router      Age         Seq#       Checksum
+155.1.108.10    150.1.10.10     515         0x80000001 0x000C1C <------------------ Node 150.1.10.10 is generating the Network LSA. ONLY DRs generate Network LSA 
+
+R8#show ip ospf database router 150.1.8.8
+
+            OSPF Router with ID (150.1.8.8) (Process ID 1)
+
+                Router Link States (Area 0)
+
+  LS age: 656
+  Options: (No TOS-capability, DC)
+  LS Type: Router Links
+  Link State ID: 150.1.8.8
+  Advertising Router: 150.1.8.8
+  LS Seq Number: 80000002
+  Checksum: 0xCE99
+  Length: 72
+  Number of Links: 4 <----------------- number of links in OSPF process. count of output in "show ip ospf interface brief"
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 150.1.8.8
+     (Link Data) Network Mask: 255.255.255.255
+      Number of MTID metrics: 0
+       TOS 0 Metrics: 1
+
+    Link connected to: a Transit Network
+     (Link ID) Designated Router address: 155.1.108.10  <---------------------- IP of DR
+     (Link Data) Router Interface address: 155.1.108.8
+      Number of MTID metrics: 0
+       TOS 0 Metrics: 1
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 155.1.58.0
+     (Link Data) Network Mask: 255.255.255.0
+      Number of MTID metrics: 0
+       TOS 0 Metrics: 1
+
+    Link connected to: a Stub Network
+     (Link ID) Network/subnet number: 155.1.8.0
+     (Link Data) Network Mask: 255.255.255.0
+      Number of MTID metrics: 0
+       TOS 0 Metrics: 1
+
+
+
 
 
 Designated Router
