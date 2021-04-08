@@ -633,9 +633,26 @@ Useful Commands
 - debug ip packet
 	> use with caution
 	
+Syslog Messages
+- Duplicate router ID
+- FLOOD_WAR
+	> One router is advertising a route into the OSPF network
+	> Another is withdrawing that route
+	> normally seen because 2 or more routers share a Router ID
+- Flapping between EXSTART and DOWN
+	> remember attributes are negotiated on EXSTART
+		- area, stub flags, mtu, etc
+		
+
 Normal OSPF Adjacency State Machine Order
-- Down/Attempt
+- Down
+	> No hellos received from neighbor
+- Attempt
+	> Unicast hello packet has been sent to neighbot, but no hellos has been received back
+	> only used for manually configured NBMA neighbors
 - Init
+	> I have received a hello packet from a neighbor, but they have not acknowledged a hello from me
+	> Stucke here? probably a transport problem. check filtering
 - 2-Way
 	> Stop here for DROthers
 	> If you dont get to 2-way, there is a transport problem
@@ -644,9 +661,19 @@ Normal OSPF Adjacency State Machine Order
 		- Layer 1 issues
 		- etc
 - ExStart
+	> Stucke here? probably attribute issue
 - Exchange
+	> Stucke here? probably attribute issue
 - Loading
 - Full
+
+- Network Type P2P
+interface GigabitEthernet1/0.108
+ encapsulation dot1Q 108
+ ip address 155.1.108.8 255.255.255.0
+ ip ospf network point-to-point
+
+
 
 OSPF Adjacency Attributes
 - Unique OSPF Adj Attributes
@@ -660,9 +687,65 @@ OSPF Adjacency Attributes
 		- best practice is NOT TO IGNORE MTU checks
 	> Network Type
 		- defaults to Broadcast
+		- p2p
+				interface GigabitEthernet1/0.108
+					ip ospf network point-to-point
+		- if there is a network type mismatch
+			> database will show the issue. routing bit is NOT SET
+			> one router is trying to recurse to LSA type 2. but the other router doesnt have LSA 2 because it is on P2P
+			> on show ip ospf neighbor, it looks like they form an adjacency
+				- it will show that one has a DR/BDR, the other has "-"
+		- make sure that network types match
+			> P2P and P2Multipoint SHOULD work together since they both dont use LSA type 2
+				- BUT TIMERS SHOULD MATCH, because different network types have different default times
+				- P2P has hello 10. Dead 40
+				- P2Multipoint has hello 30. dead 120
+			
+			Example:
+			R8
+			interface GigabitEthernet1/0.108
+			 encapsulation dot1Q 108
+			 ip address 155.1.108.8 255.255.255.0
+			 ip ospf network point-to-multipoint
+			 ip ospf hello-interval 10
+			 ipv6 address 2001:155:1:108::8/64
+			end
+				
+			R10
+			interface GigabitEthernet1/0.108
+			 encapsulation dot1Q 108
+			 ip address 155.1.108.10 255.255.255.0
+			 ip ospf network point-to-point
+			 ipv6 address 2001:155:1:108::10/64
+			end
+	
 	> Authentication
 	> Stub Flags
 	> Other optional capabilities
+	
+	
+----------------------
+Example
+
+DMVPN
+OSPF on tunnel 0
+
+R5#show ip ospf int tun0
+Tunnel0 is administratively down, line protocol is down 
+  Internet Address 155.1.0.5/24, Area 0, Attached via Network Statement
+  Process ID 1, Router ID 150.1.5.5, Network Type POINT_TO_POINT, Cost: 1000
+  Topology-MTID    Cost    Disabled    Shutdown      Topology Name
+        0           1000      no          no            Base
+  Transmit Delay is 1 sec, State DOWN
+  Timer intervals configured, Hello 10, Dead 40, Wait 40, Retransmit 5
+    oob-resync timeout 40
+R5#
+
+
+- GRE Tunnel is P2P on OSPF point of view
+- This is why the adjacencies will flap continuously. P2P only allows a single adjacency on an interface
+- P2Multipoint will solve the problem
+	> Broadcast or Non-broadcast
 
 ======================================================================
 OSPF Areas and LSAs
