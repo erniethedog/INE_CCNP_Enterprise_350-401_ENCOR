@@ -1040,18 +1040,23 @@ OSPF Network Loopback
 ======================================================================
 Configuring OSPF Network Types
 
+- Election is invoked once ADJACENCY STATE MACHINE reaches or beyond 2-WAY state
+
+- Note current values for network's DR and BDR. Used for comparison later
 - Elect BDR first. If no DR is detected based from hellos, the BDR will promote itself as the DR.
 - If there are 2 or more BDRs, highest router priority is declared to be BDR
 - In case of a tie, the one having the highest Router ID is chosen
-- See RFC 2328
+- See RFC 2328 for the rest
+https://tools.ietf.org/html/rfc2328
+
+WAIT Timer = Dead Timer
+- Router will wait for WAIT_TIMER for any hellos saying he is the designated router
+- If so, local router will accept that neighboring router as the DR
+- No DR preemption happens
 
 
 
-28:45
-
-
-
-
+22:00
 
 
 
