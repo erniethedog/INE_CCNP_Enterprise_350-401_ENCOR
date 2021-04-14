@@ -1050,41 +1050,24 @@ Configuring OSPF Network Types
 https://tools.ietf.org/html/rfc2328
 
 WAIT Timer = Dead Timer
-- Router will wait for WAIT_TIMER for any hellos saying he is the designated router
+- Router will wait for WAIT_TIMER for any hellos saying he is the designated router/starting election
 - If so, local router will accept that neighboring router as the DR
 - No DR preemption happens
 
-
-
-22:00
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- NOTE: Routers will remember the DR once the OSPF process runs
 
 ======================================================================
 OSPF Virtual Links
+
+- OSPF Discontiguoug Areas
+- OSPF Virtual Links
+- Path Selection with OSPF Virtual Links
+
+
+
+
+
+
 ======================================================================
 OSPF Stub Areas
 ======================================================================
