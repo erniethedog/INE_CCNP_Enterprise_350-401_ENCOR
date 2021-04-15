@@ -1437,7 +1437,17 @@ LSA Type 7 - NSSA External LSA
 	> ABR removes LSAs 3 (Inter-Area), 4 (ASBR), and 5 (External)
 	> ABR originates default route
 		
-		
+
+Routing Priority in OSPF (highest priority to lowest)
+O - Intra area
+O IA - Inter-Area
+E1 - External type 1
+N1 - NSSA Type 1
+E2 - External Type 2
+N2 - NSSA Type 2
+
+
+
 ======================================================================
 Configuring OSPF Stub Areas
 ======================================================================
