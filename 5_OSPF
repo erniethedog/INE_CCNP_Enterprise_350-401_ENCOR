@@ -1123,7 +1123,7 @@ Scenario
 - R7 R9 Gig1.79 in area 3
 - R1 R4 R6 Gig1.146 in area 2
 - R6 R7 Gig1.67 in area 2
-- R1 R2 R3 R4 R5 DMVPN tunnel in area 0
+- R1 R2 R3 R4 R5 DMVPN tunnel0 and loopback0 in area 0
 - Configure Virtual Link between R7 and R1 (and/or to R4 for traffic engineering)
 
 R1
@@ -1137,28 +1137,251 @@ conf t
 		area 2 virtual-link 150.1.1.1					! going to R1's router ID
 
 
-25:00
+R7#show ip ospf neighbor 
+
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+150.1.1.1         0   FULL/  -        00:00:16    155.1.146.1     OSPF_VL0
+150.1.6.6         1   FULL/BDR        00:00:38    155.1.67.6      GigabitEthernet1/0.67
+150.1.9.9         1   FULL/DR         00:00:35    155.1.79.9      GigabitEthernet1/0.79
+
+R1#show ip ospf neighbor 
+
+Neighbor ID     Pri   State           Dead Time   Address         Interface
+150.1.7.7         0   FULL/  -        00:00:00    155.1.67.7      OSPF_VL0
+150.1.5.5         0   FULL/  -        00:01:43    155.1.0.5       Tunnel0
+150.1.4.4         1   FULL/DROTHER    00:00:38    155.1.146.4     GigabitEthernet1/0.146
+150.1.6.6         1   FULL/DR         00:00:32    155.1.146.6     GigabitEthernet1/0.146
 
 
+- DNA = Does Not Age. (Virtual Link)
+- When LSA age increments past 30 mins. Originating router will reflood its LSA
+	> With DNA flag set, flooding every 30 mins does NOT happen
+R5#show ip ospf database 
+
+            OSPF Router with ID (150.1.5.5) (Process ID 1)
+
+                Router Link States (Area 0)
+
+Link ID         ADV Router      Age         Seq#       Checksum Link count
+150.1.1.1       150.1.1.1       21          0x80000006 0x00236C 4
+150.1.2.2       150.1.2.2       18          0x80000003 0x00066E 3
+150.1.3.3       150.1.3.3       16          0x80000003 0x003339 3
+150.1.4.4       150.1.4.4       14          0x80000004 0x006101 3
+150.1.5.5       150.1.5.5       10          0x80000005 0x00AC0A 6
+150.1.7.7       150.1.7.7       2     (DNA) 0x80000002 0x00EA77 1
+
+                Summary Net Link States (Area 0)
+
+Link ID         ADV Router      Age         Seq#       Checksum
+150.1.6.6       150.1.1.1       1051        0x80000001 0x000DF0
+150.1.6.6       150.1.4.4       1038        0x80000001 0x00E512
+150.1.6.6       150.1.7.7       7     (DNA) 0x80000001 0x00BE33
+150.1.7.7       150.1.7.7       7     (DNA) 0x80000001 0x009F51
+150.1.9.9       150.1.7.7       7     (DNA) 0x80000001 0x007F6C
+155.1.7.0       150.1.7.7       7     (DNA) 0x80000001 0x00A44E
+155.1.9.0       150.1.7.7       7     (DNA) 0x80000001 0x009857
+155.1.37.0      150.1.7.7       7     (DNA) 0x80000001 0x00597B
+155.1.67.0      150.1.1.1       1051        0x80000001 0x00665B
+155.1.67.0      150.1.4.4       1038        0x80000001 0x003F7C
+155.1.67.0      150.1.7.7       7     (DNA) 0x80000001 0x000EA8
+155.1.79.0      150.1.7.7       7     (DNA) 0x80000001 0x008921
+155.1.146.0     150.1.1.1       1051        0x80000001 0x00F37F
+155.1.146.0     150.1.4.4       1038        0x80000001 0x00CCA0
+155.1.146.0     150.1.7.7       7     (DNA) 0x80000001 0x00AFB6
+R5#
 
 
+R7#show ip ospf interface 
+OSPF_VL0 is up, line protocol is up 
+  Internet Address 155.1.67.7/24, Area 0, Attached via Not Attached
+  Process ID 1, Router ID 150.1.7.7, Network Type VIRTUAL_LINK, Cost: 2 <------------------------------------------!!!!! Cost of 1 (SPT) to 150.1.1.1 
+  Topology-MTID    Cost    Disabled    Shutdown      Topology Name
+        0           2         no          no            Base
+  Configured as demand circuit <------------------------------------------!!!!!
+  Run as demand circuit
+  DoNotAge LSA allowed <------------------------------------------!!!!!
+  Transmit Delay is 1 sec, State POINT_TO_POINT
+  Timer intervals configured, Hello 10, Dead 40, Wait 40, Retransmit 5
+    oob-resync timeout 40
+    Hello due in 00:00:07
+  Supports Link-local Signaling (LLS)
+  Cisco NSF helper support enabled
+  IETF NSF helper support enabled
+  Index 1/6, flood queue length 0
+  Next 0x0(0)/0x0(0)
+  Last flood scan length is 1, maximum is 1
+  Last flood scan time is 0 msec, maximum is 0 msec
+  Neighbor Count is 1, Adjacent neighbor count is 1 
+    Adjacent with neighbor 150.1.1.1  (Hello suppressed) <------------------------------------------!!!!!
+  Suppress hello for 1 neighbor(s) <------------------------------------------!!!!!
+- SNIPPED - 
+
+R7#show ip ospf database router self-originate 
+
+            OSPF Router with ID (150.1.7.7) (Process ID 1)
+
+                Router Link States (Area 0) <------------------------------------------!!!!!
+
+  LS age: 1337
+  Options: (No TOS-capability, DC)
+  LS Type: Router Links
+  Link State ID: 150.1.7.7
+  Advertising Router: 150.1.7.7
+  LS Seq Number: 80000002
+  Checksum: 0xEA77
+  Length: 36
+  Area Border Router
+  Number of Links: 1
+
+    Link connected to: a Virtual Link
+     (Link ID) Neighboring Router ID: 150.1.1.1
+     (Link Data) Router Interface address: 155.1.67.7
+      Number of MTID metrics: 0
+       TOS 0 Metrics: 2 <------------------------------------------!!!!! based on area 2 spt cost
+
+
+          
+                Router Link States (Area 2)
+
+  LS age: 1337
+  Options: (No TOS-capability, DC)
+  LS Type: Router Links
+  Link State ID: 150.1.7.7
+  Advertising Router: 150.1.7.7
+  LS Seq Number: 80000004
+  Checksum: 0x769B
+  Length: 36
+  Area Border Router
+  Virtual Link Endpoint
+  Number of Links: 1
+
+    Link connected to: a Transit Network
+     (Link ID) Designated Router address: 155.1.67.7
+     (Link Data) Router Interface address: 155.1.67.7
+      Number of MTID metrics: 0
+       TOS 0 Metrics: 1
+
+- SNIPPED -
+
+
+!! Without Virtual Link
+R9#show ip ospf database 
+
+            OSPF Router with ID (150.1.9.9) (Process ID 1)
+
+                Router Link States (Area 3)
+
+Link ID         ADV Router      Age         Seq#       Checksum Link count
+150.1.7.7       150.1.7.7       1289        0x80000001 0x008F32 4
+150.1.9.9       150.1.9.9       1288        0x80000002 0x008AF8 3
+
+                Net Link States (Area 3)
+
+Link ID         ADV Router      Age         Seq#       Checksum
+155.1.79.9      150.1.9.9       1288        0x80000001 0x003517
+R9#
+R9#
+R9#
+
+
+!! With Virtual Link
+! R7 is now an ABR
+R9#show ip ospf database 
+
+            OSPF Router with ID (150.1.9.9) (Process ID 1)
+
+                Router Link States (Area 3)
+
+Link ID         ADV Router      Age         Seq#       Checksum Link count
+150.1.7.7       150.1.7.7       1656        0x80000002 0x00902F 4
+150.1.9.9       150.1.9.9       1181        0x80000003 0x0088F9 3
+
+                Net Link States (Area 3)
+
+Link ID         ADV Router      Age         Seq#       Checksum
+155.1.79.9      150.1.9.9       1181        0x80000002 0x003318
+
+                Summary Net Link States (Area 3)
+
+Link ID         ADV Router      Age         Seq#       Checksum
+150.1.1.1       150.1.7.7       876         0x80000001 0x0032C8
+150.1.2.2       150.1.7.7       876         0x80000001 0x00849C
+150.1.3.3       150.1.7.7       866         0x80000001 0x006FAF
+150.1.4.4       150.1.7.7       861         0x80000002 0x00F003
+150.1.5.5       150.1.7.7       866         0x80000001 0x0012F4
+150.1.6.6       150.1.7.7       1656        0x80000001 0x00BE33
+155.1.0.1       150.1.7.7       1646        0x80000001 0x00F106
+155.1.0.2       150.1.7.7       1646        0x80000001 0x004FCF
+155.1.0.3       150.1.7.7       1646        0x80000001 0x0045D8
+155.1.0.4       150.1.7.7       861         0x80000006 0x00C926
+155.1.0.5       150.1.7.7       1646        0x80000001 0x00FD0A
+155.1.67.0      150.1.7.7       1656        0x80000001 0x000EA8
+155.1.146.0     150.1.7.7       1656        0x80000001 0x00AFB6
+R9#
 
 ----------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
-
 ======================================================================
 OSPF Stub Areas
+
+- Scaling OSPF with Stub Areas
+- OSPF Stub Area Variations
+- Type 7 LSA
+
+
+Scalability
+- Function of two variables
+- How complex is the topology graph
+	> how many routers are in the area
+	> large flooding domain means lots of SPF runs
+- How much reachability information is there?
+	> how many routers are being advertised
+	> large routing tables means it takes longer to flood
+
+
+Topology vs NLRI Summarization
+- Topology summarization achieved through OSPF Areas
+	> Hide the details of how the graph looks in other areas
+	> Only run SPF for intra-area destinations
+	> Areas don't hide reachability information, though
+- NLRI Summarization reduces the number of routes
+	> Take multiple longer match prefixes and combine them into smaller shorter matches
+
+OSPF NLRI Summarization
+- 2 Ways
+	> Per-prefix summarization
+		- ie. two routes 100.0.0.0/16 and 100.1.0.0/16 becomes onerouter 100.0.0./15
+	> Per- LSA Sumarization
+		- ie. remove all inter-area routes and replace them with the shortest match possible, a default route
+		- this is what STUB AREAS do
+
+
+HOW OSPF Stub Areas Work
+- Filtering is enforced at common transit point of the OSPF topology
+	> ie. the ABR
+- ABR controls which LSAs enter the area
+	> Type 3, 4, and/or 5 are filtered depending on the stub type
+- Reachbility information removed is then replaced with a default route
+	> still allows reachability to removed routes (in most cases)
+- All routers in the area MUST agree on the stub flag
+	> Part of adjacency negotiation
+
+
+OSPF Stub Area Types
+- Four stub area types control which routes (LSAs) can enter the areae
+
+
+7:45
+
+
+
+
+
+
+
+
+
+
 ======================================================================
 Configuring OSPF Stub Areas
 ======================================================================
